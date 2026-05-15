@@ -502,6 +502,37 @@ export function coinUnlockVideo(videoId: string) {
 	return post<{ success: boolean; balance_after: number }>('/api/v1/reward/unlock', { video_id: videoId });
 }
 
+// ========== 视频详情 API ==========
+
+/**
+ * 获取视频详情（基础版）
+ */
+export function getVideoDetail(id: string) {
+	return get<import('./types').Video>(`/api/v1/videos/${id}`);
+}
+
+/**
+ * 获取带多线路的视频详情（增强版）
+ * 返回 VideoDetail，包含 play_lines、domain_pool、shared_path
+ */
+export function getVideoWithLines(id: string) {
+	return get<import('./types').VideoDetail>(`/api/v1/videos/${id}/play`);
+}
+
+/**
+ * 上报线路速度
+ * @param videoId 视频 ID
+ * @param lineIndex 线路索引
+ * @param speed 下载速度（bytes/s）
+ */
+export function reportLineSpeed(videoId: string, lineIndex: number, speed: number) {
+	return post('/api/v1/videos/line-speed', {
+		video_id: videoId,
+		line_index: lineIndex,
+		speed
+	});
+}
+
 // ========== 域名轮询 API ==========
 
 /**

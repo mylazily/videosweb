@@ -522,6 +522,41 @@ export interface DeviceProfile {
 	network_type: 'wifi' | '4g' | '5g' | '3g' | 'unknown';
 }
 
+// ========== 播放线路相关 ==========
+
+/** 播放线路 */
+export interface PlayLine {
+	source_name: string;
+	m3u8_url: string;
+	domain?: string;
+	path?: string;
+	format?: string;
+	quality?: string;   // 1080P/720P/480P
+	language?: string;  // 国语/粤语/英语
+}
+
+/** 视频详情（增强版） */
+export interface VideoDetail extends Video {
+	clean_title: string;
+	play_lines: PlayLine[];
+	domain_pool?: string[];
+	shared_path?: string;
+	source_count: number;
+}
+
+/** 播放器状态 */
+export type PlayerState = 'idle' | 'loading' | 'playing' | 'paused' | 'error' | 'switching';
+
+/** 播放器回调 */
+export interface PlayerCallbacks {
+	onPlay?: () => void;
+	onPause?: () => void;
+	onEnded?: () => void;
+	onError?: (error: string) => void;
+	onLineChange?: (index: number) => void;
+	onTimeUpdate?: (currentTime: number, duration: number) => void;
+}
+
 // ========== 播放线路延迟 ==========
 
 /** 线路延迟信息 */
@@ -531,8 +566,8 @@ export interface SourceLatency {
 	is_recommended: boolean;
 }
 
-/** 播放器事件回调 */
-export interface PlayerCallbacks {
+/** 播放器事件回调（旧版，保留兼容） */
+export interface PlayerCallbacksLegacy {
 	onPlay?: () => void;
 	onPause?: () => void;
 	onEnded?: () => void;

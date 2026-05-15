@@ -1,21 +1,27 @@
 /// <reference lib="webworker" />
 
 /**
- * Service Worker
- * 优化：改进缓存策略、添加后台同步、优化离线体验
- * 增强：P2P 数据缓存、Push 事件监听、通知点击处理、后台同步
+ * Service Worker（增强版 v4）
+ * 优化：
+ * - m3u8/ts 文件的缓存策略（Network First，失败返回缓存）
+ * - 播放器页面的离线 fallback
+ * - 所有线路失败时的友好离线页面
+ * - 定期域名健康检查（后台同步）
+ * - P2P 数据缓存、Push 事件监听、通知点击处理
  */
 
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v4';
 const STATIC_CACHE = `xvideos-static-${CACHE_VERSION}`;
 const API_CACHE = `xvideos-api-${CACHE_VERSION}`;
 const IMAGE_CACHE = `xvideos-images-${CACHE_VERSION}`;
 const P2P_CACHE = `xvideos-p2p-${CACHE_VERSION}`;
+const MEDIA_CACHE = `xvideos-media-${CACHE_VERSION}`;
 
 // 需要预缓存的静态资源
 const PRECACHE_URLS = [
 	'/',
 	'/fallback.html',
+	'/offline-player.html',
 	'/manifest.json',
 	'/icons/icon-192.png',
 	'/icons/icon-512.png'
@@ -34,6 +40,9 @@ const FALLBACK_DOMAINS = [
 
 // 当前激活的 API 域名
 let currentApiDomain = FALLBACK_DOMAINS[0];
+
+// 域名健康状态缓存
+const domainHealthCache = new Map();
 
 // ========== 安装事件 ==========
 
@@ -77,6 +86,8 @@ self.addEventListener('activate', (event) => {
 			.then(() => {
 				// 激活后立即检查 API 域名
 				findActiveDomain();
+				// 激活后注册后台同步
+				registerBackgroundSync();
 			})
 	);
 });
@@ -99,14 +110,26 @@ function fetchWithTimeout(url, options = {}, timeout = API_TIMEOUT) {
  * 检查 API 域名是否可用
  */
 async function checkDomain(domain) {
+	// 先检查缓存
+	if (domainHealthCache.has(domain)) {
+		const cached = domainHealthCache.get(domain);
+		// 缓存有效期 5 分钟
+		if (Date.now() - cached.checkedAt < 5 * 60 * 1000) {
+			return cached.isAlive;
+		}
+	}
+
 	try {
 		const response = await fetchWithTimeout(
 			`${domain}/api/health`,
 			{ method: 'GET', mode: 'cors' },
 			3000
 		);
-		return response.ok;
+		const isAlive = response.ok;
+		domainHealthCache.set(domain, { isAlive, checkedAt: Date.now() });
+		return isAlive;
 	} catch {
+		domainHealthCache.set(domain, { isAlive: false, checkedAt: Date.now() });
 		return false;
 	}
 }
@@ -140,6 +163,17 @@ async function findActiveDomain() {
 }
 
 /**
+ * 注册后台同步
+ */
+function registerBackgroundSync() {
+	if ('sync' in self.registration) {
+		self.registration.sync.register('domain-health-check').catch(() => {
+			// 后台同步注册失败，不影响主流程
+		});
+	}
+}
+
+/**
  * 判断是否为 API 请求
  */
 function isApiRequest(url) {
@@ -158,6 +192,18 @@ function isP2PRequest(url) {
  */
 function isPushRequest(url) {
 	return url.pathname.startsWith('/api/v1/push/');
+}
+
+/**
+ * 判断是否为 m3u8 或 ts 媒体文件请求
+ */
+function isMediaRequest(url) {
+	return url.pathname.endsWith('.m3u8') ||
+		url.pathname.endsWith('.ts') ||
+		url.pathname.endsWith('.m4s') ||
+		url.pathname.endsWith('.mp4') ||
+		url.pathname.includes('.m3u8?') ||
+		url.pathname.includes('/hls/');
 }
 
 /**
@@ -184,6 +230,120 @@ function isImageRequest(url) {
  */
 function isNavigationRequest(request) {
 	return request.mode === 'navigate';
+}
+
+/**
+ * 判断是否为播放器页面
+ */
+function isPlayerPage(url) {
+	return url.pathname.startsWith('/video/');
+}
+
+/**
+ * 生成离线播放器页面
+ */
+function generateOfflinePlayerPage() {
+	return new Response(`
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>无法连接 - XVideos 影视</title>
+	<style>
+		* { margin: 0; padding: 0; box-sizing: border-box; }
+		body {
+			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+			background: #17181A;
+			color: #fff;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			min-height: 100vh;
+			padding: 20px;
+		}
+		.container {
+			text-align: center;
+			max-width: 400px;
+		}
+		.icon {
+			width: 80px;
+			height: 80px;
+			margin: 0 auto 20px;
+			background: rgba(251, 114, 153, 0.1);
+			border-radius: 50%;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+		.icon svg {
+			width: 40px;
+			height: 40px;
+			fill: #FB7299;
+		}
+		h1 {
+			font-size: 20px;
+			margin-bottom: 10px;
+			color: #fff;
+		}
+		p {
+			font-size: 14px;
+			color: #999;
+			line-height: 1.6;
+			margin-bottom: 24px;
+		}
+		.btn {
+			display: inline-block;
+			padding: 12px 32px;
+			background: #FB7299;
+			color: #fff;
+			border: none;
+			border-radius: 24px;
+			font-size: 14px;
+			cursor: pointer;
+			text-decoration: none;
+			transition: opacity 0.2s;
+		}
+		.btn:hover { opacity: 0.9; }
+		.btn-secondary {
+			display: inline-block;
+			padding: 10px 24px;
+			background: transparent;
+			color: #FB7299;
+			border: 1px solid #FB7299;
+			border-radius: 24px;
+			font-size: 13px;
+			cursor: pointer;
+			text-decoration: none;
+			margin-top: 12px;
+			transition: opacity 0.2s;
+		}
+		.btn-secondary:hover { opacity: 0.9; }
+	</style>
+</head>
+<body>
+	<div class="container">
+		<div class="icon">
+			<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+		</div>
+		<h1>所有线路暂时无法连接</h1>
+		<p>所有采集源在您当前地区均无法连接，请检查网络后重试</p>
+		<a href="javascript:void(0)" class="btn" onclick="window.location.reload()">检查网络并重试</a>
+		<br>
+		<a href="/" class="btn-secondary">返回首页</a>
+	</div>
+	<script>
+		// 尝试检测网络恢复
+		window.addEventListener('online', () => {
+			window.location.reload();
+		});
+	</script>
+</body>
+</html>
+	`, {
+		headers: { 'Content-Type': 'text/html; charset=utf-8' },
+		status: 503
+	});
 }
 
 // ========== 缓存策略 ==========
@@ -268,6 +428,46 @@ async function staleWhileRevalidate(request, cacheName) {
 	return cached || fetchPromise;
 }
 
+/**
+ * 媒体文件缓存策略（Network First，失败返回缓存）
+ * 专门用于 m3u8 和 ts 文件
+ * - m3u8 文件：短缓存（5 分钟），因为播放列表可能变化
+ * - ts 文件：长缓存（1 小时），因为切片内容不会变化
+ */
+async function mediaCacheStrategy(request) {
+	const url = new URL(request.url);
+	const isManifest = url.pathname.endsWith('.m3u8');
+	const cacheName = MEDIA_CACHE;
+	const cache = await caches.open(cacheName);
+
+	try {
+		const response = await fetchWithTimeout(request, {}, 8000);
+
+		if (response.ok) {
+			// 克隆响应并缓存
+			const responseToCache = response.clone();
+			await cache.put(request, responseToCache);
+		}
+
+		return response;
+	} catch (error) {
+		// 网络失败，尝试返回缓存
+		const cached = await cache.match(request);
+
+		if (cached) {
+			console.log('[SW] 媒体文件使用缓存:', request.url);
+			return cached;
+		}
+
+		// 缓存也没有，返回空响应（播放器会触发错误处理和线路切换）
+		console.warn('[SW] 媒体文件无缓存:', request.url);
+		return new Response('', {
+			status: 408,
+			statusText: 'Request Timeout'
+		});
+	}
+}
+
 // ========== Fetch 事件 ==========
 
 self.addEventListener('fetch', (event) => {
@@ -281,6 +481,12 @@ self.addEventListener('fetch', (event) => {
 
 	// 跳过 chrome-extension 等请求
 	if (!url.hostname) {
+		return;
+	}
+
+	// m3u8/ts 媒体文件：Network First，失败返回缓存
+	if (isMediaRequest(url)) {
+		event.respondWith(mediaCacheStrategy(request));
 		return;
 	}
 
@@ -365,8 +571,24 @@ self.addEventListener('fetch', (event) => {
 		return;
 	}
 
-	// 导航请求：网络优先，失败返回离线页面
+	// 导航请求：网络优先
 	if (isNavigationRequest(request)) {
+		// 播放器页面：失败返回离线播放器页面
+		if (isPlayerPage(url)) {
+			event.respondWith(
+				networkFirst(request, STATIC_CACHE).catch(() => {
+					// 尝试返回离线播放器页面
+					return caches.match('/offline-player.html').then((cached) => {
+						if (cached) return cached;
+						// 生成离线播放器页面
+						return generateOfflinePlayerPage();
+					});
+				})
+			);
+			return;
+		}
+
+		// 其他导航请求：网络优先，失败返回离线页面
 		event.respondWith(
 			networkFirst(request, STATIC_CACHE).catch(() => {
 				return caches.match('/fallback.html');
@@ -484,6 +706,15 @@ self.addEventListener('message', (event) => {
 			});
 			break;
 
+		case 'GET_DOMAIN_HEALTH':
+			// 返回域名健康状态
+			const healthStatus = {};
+			domainHealthCache.forEach((value, key) => {
+				healthStatus[key] = value;
+			});
+			event.ports[0]?.postMessage({ type: 'DOMAIN_HEALTH', data: healthStatus });
+			break;
+
 		default:
 			break;
 	}
@@ -492,7 +723,8 @@ self.addEventListener('message', (event) => {
 // ========== 后台同步 ==========
 
 self.addEventListener('sync', (event) => {
-	if (event.tag === 'check-api-domain') {
+	// 域名健康检查后台同步
+	if (event.tag === 'domain-health-check') {
 		event.waitUntil(findActiveDomain());
 	}
 
@@ -523,6 +755,37 @@ self.addEventListener('sync', (event) => {
 			})
 		);
 	}
+
+	// 媒体缓存清理后台同步
+	if (event.tag === 'media-cache-cleanup') {
+		event.waitUntil(
+			caches.open(MEDIA_CACHE).then((cache) => {
+				return cache.keys().then((requests) => {
+					return Promise.all(
+						requests.map((request) => {
+							return cache.match(request).then((response) => {
+								if (response) {
+									const date = response.headers.get('date');
+									if (date) {
+										const cacheTime = new Date(date).getTime();
+										const now = Date.now();
+										const url = new URL(request.url);
+										// ts 文件缓存有效期 1 小时，m3u8 文件 5 分钟
+										const maxAge = url.pathname.endsWith('.m3u8')
+											? 5 * 60 * 1000
+											: 60 * 60 * 1000;
+										if (now - cacheTime > maxAge) {
+											return cache.delete(request);
+										}
+									}
+								}
+							});
+						})
+					);
+				});
+			})
+		);
+	}
 });
 
 // ========== 定期探活 ==========
@@ -532,4 +795,11 @@ setInterval(() => {
 	findActiveDomain();
 }, 5 * 60 * 1000);
 
-console.log('[SW] Service Worker 已加载 (v3 - P2P + Push 增强)');
+// 每 30 分钟清理一次过期媒体缓存
+setInterval(() => {
+	if ('sync' in self.registration) {
+		self.registration.sync.register('media-cache-cleanup').catch(() => {});
+	}
+}, 30 * 60 * 1000);
+
+console.log('[SW] Service Worker 已加载 (v4 - 智能容灾 + 媒体缓存增强)');

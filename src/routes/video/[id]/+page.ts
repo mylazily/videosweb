@@ -1,10 +1,61 @@
 /**
- * 视频详情页数据加载
+ * 视频详情页数据加载（增强版）
+ * 支持多线路播放、域名池、共享路径
  */
-import type { Video, Comment, Danmaku } from '$lib/types';
+import type { Video, Comment, Danmaku, PlayLine, VideoDetail } from '$lib/types';
 
-// 模拟视频详情数据
-function getMockVideo(id: string) {
+// ========== 模拟数据 ==========
+
+/**
+ * 模拟播放线路数据
+ */
+function getMockPlayLines(): PlayLine[] {
+	return [
+		{
+			source_name: '线路1 - 高清',
+			m3u8_url: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
+			domain: 'https://cdn1.example.com',
+			path: '/video/123/index.m3u8',
+			format: 'm3u8',
+			quality: '1080P',
+			language: '国语'
+		},
+		{
+			source_name: '线路2 - 备用',
+			m3u8_url: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
+			domain: 'https://cdn2.example.com',
+			path: '/video/123/index.m3u8',
+			format: 'm3u8',
+			quality: '720P',
+			language: '国语'
+		},
+		{
+			source_name: '线路3 - 极速',
+			m3u8_url: 'https://devstreaming-cdn.apple.com/videos/streaming/examples/img_bipbop_adv_example_fmp4/master.m3u8',
+			domain: 'https://cdn3.example.com',
+			path: '/video/123/index.m3u8',
+			format: 'm3u8',
+			quality: '720P',
+			language: '粤语'
+		}
+	];
+}
+
+/**
+ * 模拟域名池
+ */
+function getMockDomainPool(): string[] {
+	return [
+		'https://cdn-backup1.example.com',
+		'https://cdn-backup2.example.com',
+		'https://cdn-backup3.example.com'
+	];
+}
+
+/**
+ * 模拟视频详情数据（旧格式）
+ */
+function getMockVideo(id: string): Video {
 	return {
 		id,
 		title: `精彩影视 - ${id}`,
@@ -40,6 +91,31 @@ function getMockVideo(id: string) {
 				}))
 			}
 		]
+	};
+}
+
+/**
+ * 将旧格式视频数据转换为增强版 VideoDetail
+ * 如果 API 返回的是旧格式（单个 url），转换为新的 playLines 格式
+ */
+function toVideoDetail(video: Video): VideoDetail {
+	const playLines: PlayLine[] = video.sources.map((source) => ({
+		source_name: source.source_name,
+		m3u8_url: source.episodes[0]?.episode_url || '',
+		domain: undefined,
+		path: undefined,
+		format: 'm3u8',
+		quality: undefined,
+		language: undefined
+	}));
+
+	return {
+		...video,
+		clean_title: video.title,
+		play_lines: playLines,
+		domain_pool: getMockDomainPool(),
+		shared_path: '/video/123/index.m3u8',
+		source_count: video.sources.length
 	};
 }
 
@@ -94,8 +170,21 @@ const mockDanmakus: Danmaku[] = Array.from({ length: 30 }, (_, i) => ({
 }));
 
 export async function load({ params }: { params: { id: string } }) {
+	const video = getMockVideo(params.id);
+
+	// 转换为增强版 VideoDetail
+	const videoDetail = toVideoDetail(video);
+
+	// 如果有模拟的多线路数据，使用模拟数据覆盖
+	const playLines = getMockPlayLines();
+	videoDetail.play_lines = playLines;
+
 	return {
-		video: getMockVideo(params.id),
+		video: video,
+		videoDetail: videoDetail,
+		playLines: playLines,
+		domainPool: getMockDomainPool(),
+		sharedPath: '/video/123/index.m3u8',
 		comments: mockComments,
 		danmakus: mockDanmakus
 	};
