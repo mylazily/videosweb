@@ -4,8 +4,14 @@
 	 * 顶部 HeaderBar + 底部 NavBar + 内容区域
 	 */
 	import { page } from '$app/state';
-	import NavBar from '$lib/components/NavBar.svelte';
-	import HeaderBar from '$lib/components/HeaderBar.svelte';
+	import NavBar from '$components/NavBar.svelte';
+	import HeaderBar from '$components/HeaderBar.svelte';
+
+	interface Props {
+		children: import('svelte').Snippet;
+	}
+
+	let { children }: Props = $props();
 
 	// 当前页面标题
 	const pageTitle = $derived(() => {
@@ -41,7 +47,7 @@
 
 	<!-- 内容区域 -->
 	<main class="flex-1 overflow-y-auto overflow-x-hidden">
-		<slot />
+		{@render children()}
 	</main>
 
 	<!-- 底部导航栏 -->

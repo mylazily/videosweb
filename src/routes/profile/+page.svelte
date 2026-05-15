@@ -74,7 +74,7 @@
 
 		<!-- 功能菜单 -->
 		<div class="mx-4 mt-4 bg-white dark:bg-dark-card rounded-xl overflow-hidden">
-			{#each menuItems as item, i}
+			{#each menuItems as item}
 				<a
 					href={item.path}
 					class="flex items-center gap-3 px-4 py-3.5 border-b border-gray-100 dark:border-dark-border last:border-0 btn-press"

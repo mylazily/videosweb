@@ -3,7 +3,7 @@
 	 * 排行榜页
 	 */
 	import type { RankItem } from '$lib/types';
-	import RankList from '$lib/components/RankList.svelte';
+	import RankList from '$components/RankList.svelte';
 
 	let { data } = $props();
 

@@ -5,13 +5,12 @@
 	 */
 	import type { Video, VideoSource, Episode, Comment, Danmaku } from '$lib/types';
 	import { formatPlayCount, formatRating, setPageTitle } from '$lib/utils';
-	import VideoPlayer from '$lib/components/VideoPlayer.svelte';
-	import DanmakuLayer from '$lib/components/DanmakuLayer.svelte';
-	import SourceSwitcher from '$lib/components/SourceSwitcher.svelte';
-	import EpisodeList from '$lib/components/EpisodeList.svelte';
-	import CommentList from '$lib/components/CommentList.svelte';
-	import CommentInput from '$lib/components/CommentInput.svelte';
-	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
+	import VideoPlayer from '$components/VideoPlayer.svelte';
+	import DanmakuLayer from '$components/DanmakuLayer.svelte';
+	import SourceSwitcher from '$components/SourceSwitcher.svelte';
+	import EpisodeList from '$components/EpisodeList.svelte';
+	import CommentList from '$components/CommentList.svelte';
+	import CommentInput from '$components/CommentInput.svelte';
 
 	let { data } = $props();
 
@@ -114,7 +113,7 @@
 			poster={video.cover}
 			onTimeUpdate={handleTimeUpdate}
 			onEnded={() => console.log('播放结束')}
-			onError={(err) => console.error('播放错误:', err)}
+			onError={(err: string) => console.error('播放错误:', err)}
 		/>
 		<DanmakuLayer
 			danmakus={danmakus}

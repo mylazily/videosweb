@@ -3,33 +3,33 @@
 	 * 分类列表页
 	 */
 	import type { Video, Category } from '$lib/types';
-	import CategoryTabs from '$lib/components/CategoryTabs.svelte';
-	import VideoGrid from '$lib/components/VideoGrid.svelte';
-	import SkeletonCard from '$lib/components/SkeletonCard.svelte';
-	import InfiniteScroll from '$lib/components/InfiniteScroll.svelte';
+	import CategoryTabs from '$components/CategoryTabs.svelte';
+	import VideoCard from '$components/VideoCard.svelte';
+	import InfiniteScroll from '$components/InfiniteScroll.svelte';
 
 	let { data } = $props();
 
-	let slug = $state(data.slug);
-	let category = $state<Category>(data.category);
+	// 使用 $derived 保持响应性
+	let slug = $derived(data.slug);
+	let category = $derived<Category>(data.category);
 	let videos = $state<Video[]>(data.videos);
 	let loading = $state(false);
 	let hasMore = $state(true);
-	let page = $state(1);
+	let pageNum = $state(1);
 
 	// 加载更多
 	async function loadMore() {
 		if (loading || !hasMore) return;
 		loading = true;
-		page++;
+		pageNum++;
 
 		// 模拟加载
 		await new Promise((resolve) => setTimeout(resolve, 800));
 
 		const moreVideos: Video[] = Array.from({ length: 10 }, (_, i) => ({
-			id: `cat_${slug}_more_${page}_${i}`,
-			title: `${category.name} - 更多作品 ${page * 10 + i + 1}`,
-			cover: `https://picsum.photos/seed/${slug}more${page}${i}/400/225`,
+			id: `cat_${slug}_more_${pageNum}_${i}`,
+			title: `${category.name} - 更多作品 ${pageNum * 10 + i + 1}`,
+			cover: `https://picsum.photos/seed/${slug}more${pageNum}${i}/400/225`,
 			description: '更多精彩内容',
 			director: '导演',
 			actors: ['演员A'],
@@ -47,7 +47,7 @@
 		videos = [...videos, ...moreVideos];
 
 		// 模拟最多 5 页
-		if (page >= 5) hasMore = false;
+		if (pageNum >= 5) hasMore = false;
 		loading = false;
 	}
 

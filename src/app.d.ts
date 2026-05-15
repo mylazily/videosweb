@@ -22,6 +22,7 @@ declare namespace App {
 	interface Error {
 		message: string;
 		code?: number;
+		stack?: string;
 	}
 }
 
@@ -33,6 +34,11 @@ declare global {
 			serviceWorker: ServiceWorkerContainer;
 		};
 	}
+}
+
+// 扩展 Error 接口
+declare interface Error {
+	stack?: string;
 }
 
 export {};

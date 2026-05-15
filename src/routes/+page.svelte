@@ -5,10 +5,10 @@
 	 */
 	import { page } from '$app/state';
 	import type { Banner, Video } from '$lib/types';
-	import VideoCard from '$lib/components/VideoCard.svelte';
-	import CategoryTabs from '$lib/components/CategoryTabs.svelte';
-	import PullRefresh from '$lib/components/PullRefresh.svelte';
-	import SkeletonCard from '$lib/components/SkeletonCard.svelte';
+	import VideoCard from '$components/VideoCard.svelte';
+	import CategoryTabs from '$components/CategoryTabs.svelte';
+	import PullRefresh from '$components/PullRefresh.svelte';
+	import SkeletonCard from '$components/SkeletonCard.svelte';
 
 	let { data } = $props();
 
@@ -85,12 +85,15 @@
 			<!-- 指示器 -->
 			<div class="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
 				{#each banners as _, i}
-					<div
-						class="w-1.5 h-1.5 rounded-full transition-all duration-300"
-						class:bg-white={i === currentBanner}
-						class:bg-white/40={i !== currentBanner}
+					<button
+						class="h-1.5 rounded-full transition-all duration-300"
 						class:w-4={i === currentBanner}
-					></div>
+						class:w-1.5={i !== currentBanner}
+						class:bg-white={i === currentBanner}
+						class:bg-white-opacity-40={i !== currentBanner}
+						aria-label="切换到第{i + 1}张轮播图"
+						onclick={() => currentBanner = i}
+					></button>
 				{/each}
 			</div>
 		</div>
@@ -141,3 +144,9 @@
 		</div>
 	</div>
 </div>
+
+<style>
+	.bg-white-opacity-40 {
+		background-color: rgba(255, 255, 255, 0.4);
+	}
+</style>

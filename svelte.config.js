@@ -14,7 +14,10 @@ const config = {
 			strict: true
 		}),
 		prerender: {
-			default: true
+			entries: ['*']
+		},
+		alias: {
+			$components: 'src/components'
 		}
 	}
 };

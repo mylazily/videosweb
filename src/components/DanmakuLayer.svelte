@@ -2,8 +2,9 @@
 	/**
 	 * 弹幕层组件
 	 * Canvas 渲染弹幕，支持滚动弹幕、顶部固定弹幕、弹幕发送
+	 * 优化：使用对象池、批量渲染、RAF 节流、内存管理
 	 */
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import type { Danmaku } from '$lib/types';
 	import { PLAYER_CONFIG } from '$lib/constants';
 
@@ -23,130 +24,310 @@
 		onSend
 	}: Props = $props();
 
-	// Canvas 相关
-	let canvasEl: HTMLCanvasElement;
+	// ========== Canvas 相关 ==========
+	let canvasEl: HTMLCanvasElement | null = $state(null);
 	let ctx: CanvasRenderingContext2D | null = null;
 	let canvasWidth = $state(0);
 	let canvasHeight = $state(0);
+	let dpr = 1;
 
-	// 弹幕轨道
-	let tracks: number[] = $state([]);
+	// ========== 弹幕配置 ==========
 	const trackHeight = 30;
+	const maxActiveDanmakus = 100; // 最大活跃弹幕数
+	const poolSize = 50; // 对象池大小
 
-	// 活跃弹幕列表
-	let activeDanmakus = $state<{
+	// ========== 弹幕对象池 ==========
+	interface ActiveDanmaku {
+		id: string;
 		text: string;
 		x: number;
 		y: number;
 		color: string;
 		speed: number;
-		type: 'scroll' | 'top';
+		type: 'scroll' | 'top' | 'bottom';
 		width: number;
-	}[]>([]);
+		createTime: number;
+		isActive: boolean;
+	}
 
-	// 输入框
+	// 使用 Map 存储活跃弹幕，提高查找效率
+	let activeDanmakus = new Map<string, ActiveDanmaku>();
+	let danmakuPool: ActiveDanmaku[] = [];
+
+	// ========== 输入框状态 ==========
 	let inputText = $state('');
 	let showInput = $state(false);
 
-	// 动画帧
+	// ========== 动画控制 ==========
 	let animationId: number | null = null;
+	let lastFrameTime = 0;
+	let isPaused = false;
+	let isDestroyed = false;
 
-	// 初始化 Canvas
-	function initCanvas() {
+	// ========== 轨道管理 ==========
+	let occupiedTracks = new Set<number>();
+
+	// ========== 初始化 ==========
+
+	/**
+	 * 初始化 Canvas
+	 */
+	function initCanvas(): void {
 		if (!canvasEl) return;
+
 		const rect = canvasEl.parentElement?.getBoundingClientRect();
 		if (!rect) return;
 
 		canvasWidth = rect.width;
 		canvasHeight = rect.height;
+		dpr = window.devicePixelRatio || 1;
 
-		const dpr = window.devicePixelRatio || 1;
 		canvasEl.width = canvasWidth * dpr;
 		canvasEl.height = canvasHeight * dpr;
 		canvasEl.style.width = `${canvasWidth}px`;
 		canvasEl.style.height = `${canvasHeight}px`;
 
-		ctx = canvasEl.getContext('2d');
+		ctx = canvasEl.getContext('2d', {
+			alpha: true,
+			desynchronized: true // 使用非同步渲染提升性能
+		});
+
 		if (ctx) {
 			ctx.scale(dpr, dpr);
+			ctx.textBaseline = 'top';
 		}
 
-		// 计算轨道数
-		const trackCount = Math.floor(canvasHeight / trackHeight);
-		tracks = Array.from({ length: trackCount }, (_, i) => i);
+		// 初始化对象池
+		initPool();
 	}
 
-	// 获取空闲轨道
+	/**
+	 * 初始化对象池
+	 */
+	function initPool(): void {
+		danmakuPool = [];
+		for (let i = 0; i < poolSize; i++) {
+			danmakuPool.push({
+				id: '',
+				text: '',
+				x: 0,
+				y: 0,
+				color: '',
+				speed: 0,
+				type: 'scroll',
+				width: 0,
+				createTime: 0,
+				isActive: false
+			});
+		}
+	}
+
+	/**
+	 * 从对象池获取弹幕对象
+	 */
+	function getFromPool(): ActiveDanmaku | null {
+		for (const item of danmakuPool) {
+			if (!item.isActive) {
+				item.isActive = true;
+				return item;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * 回收弹幕对象到对象池
+	 */
+	function returnToPool(item: ActiveDanmaku): void {
+		item.isActive = false;
+		item.id = '';
+		item.text = '';
+	}
+
+	// ========== 轨道管理 ==========
+
+	/**
+	 * 计算轨道数
+	 */
+	function getTrackCount(): number {
+		return Math.max(3, Math.floor(canvasHeight / trackHeight));
+	}
+
+	/**
+	 * 获取可用轨道
+	 */
 	function getAvailableTrack(): number {
-		const usedTracks = new Set(
-			activeDanmakus
-				.filter((d) => d.type === 'scroll' && d.x + d.width < canvasWidth * 0.8)
-				.map((d) => Math.floor(d.y / trackHeight))
-		);
+		const trackCount = getTrackCount();
 
-		for (const track of tracks) {
-			if (!usedTracks.has(track)) return track;
+		// 清理已释放的轨道
+		for (const track of occupiedTracks) {
+			let stillOccupied = false;
+			for (const d of activeDanmakus.values()) {
+				if (d.type === 'scroll' && Math.floor(d.y / trackHeight) === track) {
+					// 检查是否已离开屏幕足够距离
+					if (d.x + d.width < canvasWidth * 0.7) {
+						stillOccupied = false;
+					} else {
+						stillOccupied = true;
+					}
+					break;
+				}
+			}
+			if (!stillOccupied) {
+				occupiedTracks.delete(track);
+			}
 		}
-		return Math.floor(Math.random() * tracks.length);
+
+		// 寻找空闲轨道
+		for (let i = 0; i < trackCount; i++) {
+			if (!occupiedTracks.has(i)) {
+				occupiedTracks.add(i);
+				return i;
+			}
+		}
+
+		// 所有轨道都被占用，随机选择一个
+		return Math.floor(Math.random() * trackCount);
 	}
 
-	// 添加弹幕
-	function addDanmaku(danmaku: Danmaku) {
-		if (!ctx) return;
+	// ========== 弹幕管理 ==========
+
+	/**
+	 * 添加弹幕
+	 */
+	function addDanmaku(danmaku: Danmaku): void {
+		if (!ctx || !visible || isDestroyed) return;
+
+		// 限制活跃弹幕数量
+		if (activeDanmakus.size >= maxActiveDanmakus) {
+			// 移除最旧的弹幕
+			let oldest: ActiveDanmaku | null = null;
+			for (const d of activeDanmakus.values()) {
+				if (!oldest || d.createTime < oldest.createTime) {
+					oldest = d;
+				}
+			}
+			if (oldest) {
+				activeDanmakus.delete(oldest.id);
+				returnToPool(oldest);
+			}
+		}
+
+		// 从对象池获取
+		const item = getFromPool();
+		if (!item) return;
 
 		// 测量文本宽度
-		ctx.font = `${fontSize}px sans-serif`;
+		ctx.font = `bold ${fontSize}px sans-serif`;
 		const textWidth = ctx.measureText(danmaku.content).width;
 
+		const track = getAvailableTrack();
+		const baseY = track * trackHeight + fontSize;
+
+		item.id = danmaku.id || `${Date.now()}_${Math.random()}`;
+		item.text = danmaku.content;
+		item.color = danmaku.color || '#FFFFFF';
+		item.width = textWidth;
+		item.createTime = Date.now();
+
 		if (danmaku.type === 'top') {
-			// 顶部固定弹幕
-			const track = getAvailableTrack();
-			activeDanmakus.push({
-				text: danmaku.content,
-				x: (canvasWidth - textWidth) / 2,
-				y: track * trackHeight + fontSize,
-				color: danmaku.color || '#FFFFFF',
-				speed: 0,
-				type: 'top',
-				width: textWidth
-			});
+			item.x = (canvasWidth - textWidth) / 2;
+			item.y = baseY;
+			item.speed = 0;
+			item.type = 'top';
 
 			// 3秒后移除
 			setTimeout(() => {
-				activeDanmakus = activeDanmakus.filter((d) => d.text !== danmaku.content || d.type !== 'top');
+				if (!isDestroyed) {
+					const d = activeDanmakus.get(item.id);
+					if (d) {
+						activeDanmakus.delete(item.id);
+						returnToPool(d);
+					}
+				}
+			}, 3000);
+		} else if (danmaku.type === 'bottom') {
+			item.x = (canvasWidth - textWidth) / 2;
+			item.y = canvasHeight - baseY;
+			item.speed = 0;
+			item.type = 'bottom';
+
+			setTimeout(() => {
+				if (!isDestroyed) {
+					const d = activeDanmakus.get(item.id);
+					if (d) {
+						activeDanmakus.delete(item.id);
+						returnToPool(d);
+					}
+				}
 			}, 3000);
 		} else {
-			// 滚动弹幕
-			const track = getAvailableTrack();
-			activeDanmakus.push({
-				text: danmaku.content,
-				x: canvasWidth,
-				y: track * trackHeight + fontSize,
-				color: danmaku.color || '#FFFFFF',
-				speed: PLAYER_CONFIG.DANMAKU_SPEED + Math.random() * 40,
-				type: 'scroll',
-				width: textWidth
-			});
+			item.x = canvasWidth;
+			item.y = baseY;
+			item.speed = PLAYER_CONFIG.DANMAKU_SPEED + Math.random() * 40;
+			item.type = 'scroll';
 		}
+
+		activeDanmakus.set(item.id, item);
 	}
 
-	// 渲染循环
-	function render() {
-		if (!ctx || !visible) {
+	/**
+	 * 批量添加弹幕（用于初始化历史弹幕）
+	 */
+	function batchAddDanmakus(danmakuList: Danmaku[]): void {
+		// 分批添加，避免阻塞
+		const batchSize = 5;
+		let index = 0;
+
+		function addBatch() {
+			if (isDestroyed) return;
+			const batch = danmakuList.slice(index, index + batchSize);
+			batch.forEach(addDanmaku);
+			index += batchSize;
+
+			if (index < danmakuList.length) {
+				requestAnimationFrame(addBatch);
+			}
+		}
+
+		addBatch();
+	}
+
+	// ========== 渲染循环 ==========
+
+	/**
+	 * 渲染循环（使用 RAF 节流）
+	 */
+	function render(currentTime: number): void {
+		if (isDestroyed) return;
+
+		// 节流：限制为 60fps
+		const deltaTime = currentTime - lastFrameTime;
+		if (deltaTime < 16) {
+			animationId = requestAnimationFrame(render);
+			return;
+		}
+		lastFrameTime = currentTime;
+
+		if (!ctx || !visible || isPaused) {
 			animationId = requestAnimationFrame(render);
 			return;
 		}
 
 		// 清空画布
 		ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+		if (activeDanmakus.size === 0) {
+			animationId = requestAnimationFrame(render);
+			return;
+		}
+
 		ctx.globalAlpha = opacity;
 
-		// 绘制弹幕
-		const toRemove: number[] = [];
+		// 批量渲染
+		const toRemove: string[] = [];
 
-		for (let i = 0; i < activeDanmakus.length; i++) {
-			const d = activeDanmakus[i];
-
+		for (const d of activeDanmakus.values()) {
 			// 绘制文字阴影
 			ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
 			ctx.shadowBlur = 2;
@@ -164,50 +345,126 @@
 
 			// 更新位置
 			if (d.type === 'scroll') {
-				d.x -= d.speed / 60; // 60fps
+				d.x -= d.speed * (deltaTime / 1000);
 
 				// 超出屏幕则标记移除
-				if (d.x + d.width < 0) {
-					toRemove.push(i);
+				if (d.x + d.width < -50) {
+					toRemove.push(d.id);
 				}
 			}
 		}
 
 		// 移除超出屏幕的弹幕
-		if (toRemove.length > 0) {
-			activeDanmakus = activeDanmakus.filter((_, i) => !toRemove.includes(i));
+		for (const id of toRemove) {
+			const d = activeDanmakus.get(id);
+			if (d) {
+				activeDanmakus.delete(id);
+				returnToPool(d);
+			}
 		}
 
 		ctx.globalAlpha = 1;
 		animationId = requestAnimationFrame(render);
 	}
 
-	// 发送弹幕
-	function sendDanmaku() {
-		if (!inputText.trim()) return;
-		onSend?.(inputText.trim());
+	// ========== 用户交互 ==========
+
+	/**
+	 * 发送弹幕
+	 */
+	function sendDanmaku(): void {
+		const content = inputText.trim();
+		if (!content) return;
+
+		// 检查内容长度
+		if (content.length > 100) {
+			alert('弹幕内容不能超过100字');
+			return;
+		}
+
+		onSend?.(content);
 		inputText = '';
 		showInput = false;
+
+		// 立即显示自己发送的弹幕
+		addDanmaku({
+			id: `self_${Date.now()}`,
+			time: 0,
+			content,
+			color: '#FB7299',
+			type: 'scroll',
+			font_size: fontSize,
+			user_id: 'self'
+		});
 	}
 
-	// 监听弹幕列表变化
+	/**
+	 * 清空所有弹幕
+	 */
+	function clearDanmakus(): void {
+		for (const d of activeDanmakus.values()) {
+			returnToPool(d);
+		}
+		activeDanmakus.clear();
+		occupiedTracks.clear();
+	}
+
+	/**
+	 * 暂停/恢复弹幕
+	 */
+	function togglePause(): void {
+		isPaused = !isPaused;
+	}
+
+	// ========== 生命周期 ==========
+
+	/**
+	 * 监听弹幕列表变化
+	 */
 	$effect(() => {
-		danmakus.forEach((danmaku) => {
-			addDanmaku(danmaku);
-		});
+		if (danmakus.length > 0 && visible) {
+			// 使用批量添加避免阻塞
+			batchAddDanmakus(danmakus);
+		}
 	});
 
 	onMount(() => {
 		initCanvas();
-		render();
+		animationId = requestAnimationFrame(render);
 
-		const handleResize = () => initCanvas();
+		const handleResize = () => {
+			// 使用防抖
+			if (resizeTimeout) clearTimeout(resizeTimeout);
+			resizeTimeout = setTimeout(() => {
+				initCanvas();
+			}, 100);
+		};
+
+		let resizeTimeout: ReturnType<typeof setTimeout>;
 		window.addEventListener('resize', handleResize);
+
+		// 页面可见性变化时暂停/恢复
+		const handleVisibilityChange = () => {
+			isPaused = document.hidden;
+		};
+		document.addEventListener('visibilitychange', handleVisibilityChange);
 
 		return () => {
 			window.removeEventListener('resize', handleResize);
-			if (animationId) cancelAnimationFrame(animationId);
+			document.removeEventListener('visibilitychange', handleVisibilityChange);
+			if (resizeTimeout) clearTimeout(resizeTimeout);
 		};
+	});
+
+	onDestroy(() => {
+		isDestroyed = true;
+
+		if (animationId) {
+			cancelAnimationFrame(animationId);
+			animationId = null;
+		}
+
+		clearDanmakus();
 	});
 </script>
 
@@ -220,15 +477,25 @@
 	<!-- 弹幕开关 -->
 	<button
 		onclick={() => visible = !visible}
-		class="px-2 py-1 text-xs rounded bg-black/50 text-white btn-press"
+		class="px-2 py-1 text-xs rounded bg-black/50 text-white btn-press pointer-events-auto"
+		aria-label={visible ? '关闭弹幕' : '开启弹幕'}
 	>
 		{visible ? '弹幕开' : '弹幕关'}
+	</button>
+
+	<!-- 暂停/恢复 -->
+	<button
+		onclick={togglePause}
+		class="px-2 py-1 text-xs rounded bg-black/50 text-white btn-press pointer-events-auto"
+		aria-label={isPaused ? '恢复弹幕' : '暂停弹幕'}
+	>
+		{isPaused ? '已暂停' : '滚动中'}
 	</button>
 
 	<!-- 发送弹幕按钮 -->
 	<button
 		onclick={() => showInput = !showInput}
-		class="px-2 py-1 text-xs rounded bg-bilibili/80 text-white btn-press"
+		class="px-2 py-1 text-xs rounded bg-bilibili/80 text-white btn-press pointer-events-auto"
 	>
 		发弹幕
 	</button>
@@ -241,12 +508,13 @@
 			type="text"
 			bind:value={inputText}
 			placeholder="发送一条弹幕..."
-			class="flex-1 px-3 py-1.5 text-sm bg-black/60 text-white rounded-full border border-white/20 outline-none placeholder:text-white/40"
+			maxlength="100"
+			class="flex-1 px-3 py-1.5 text-sm bg-black/60 text-white rounded-full border border-white/20 outline-none placeholder:text-white/40 pointer-events-auto"
 			onkeydown={(e) => e.key === 'Enter' && sendDanmaku()}
 		/>
 		<button
 			onclick={sendDanmaku}
-			class="px-3 py-1.5 text-sm bg-bilibili text-white rounded-full btn-press"
+			class="px-3 py-1.5 text-sm bg-bilibili text-white rounded-full btn-press pointer-events-auto"
 		>
 			发送
 		</button>

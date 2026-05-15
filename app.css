@@ -1,8 +1,21 @@
 @import "tailwindcss";
 
-/* ========== B站风格全局样式 ========== */
+/* ========== 自定义主题配置 ========== */
+@theme {
+	/* B站粉色主题 */
+	--color-bilibili: #FB7299;
+	--color-bilibili-dark: #E45580;
+	--color-bilibili-light: #FCAFC6;
 
-/* CSS 自定义属性 */
+	/* 深色模式背景 */
+	--color-dark-bg: #17181A;
+	--color-dark-card: #222325;
+	--color-dark-border: #2E2F31;
+	--color-dark-text: #E6E6E6;
+	--color-dark-text-secondary: #999999;
+}
+
+/* ========== CSS 自定义属性 ========== */
 :root {
 	--bilibili-pink: #FB7299;
 	--bilibili-dark: #E45580;
@@ -28,7 +41,7 @@
 	--border-color: #2E2F31;
 }
 
-/* 全局基础样式 */
+/* ========== 全局基础样式 ========== */
 * {
 	margin: 0;
 	padding: 0;
@@ -46,6 +59,8 @@ html, body {
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
 }
+
+/* ========== 工具类 ========== */
 
 /* 滚动条隐藏（横向滚动区域） */
 .hide-scrollbar {
@@ -207,4 +222,14 @@ img[referrerpolicy="no-referrer"] {
 /* 评分星星 */
 .rating {
 	color: #FFA726;
+}
+
+/* 全屏容器样式 */
+.fullscreen-container {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100vw;
+	height: 100vh;
+	z-index: 9999;
 }

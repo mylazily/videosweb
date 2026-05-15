@@ -11,7 +11,9 @@
 	let loading = $state(false);
 
 	// 删除单条记录
-	async function handleDelete(id: string) {
+	async function handleDelete(id: string, event: Event) {
+		event.preventDefault();
+		event.stopPropagation();
 		history = history.filter((h) => h.id !== id);
 	}
 
@@ -95,7 +97,7 @@
 						<div class="flex items-center justify-between">
 							<span class="text-[10px] text-gray-400">{formatDate(item.watch_time)}</span>
 							<button
-								onclick|stopPropagation={() => handleDelete(item.id)}
+								onclick={(e) => handleDelete(item.id, e)}
 								class="text-xs text-gray-400 btn-press"
 							>
 								删除

@@ -27,9 +27,17 @@ export async function load({ params }: { params: { slug: string } }) {
 		sources: []
 	}));
 
+	// 确保返回完整的 Category 类型
+	const categoryData: Category = category || {
+		slug,
+		name: slug,
+		icon: '',
+		count: 0
+	};
+
 	return {
 		slug,
-		category: category || { slug, name: slug, icon: '' },
+		category: categoryData,
 		videos
 	};
 }

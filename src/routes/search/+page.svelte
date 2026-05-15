@@ -3,11 +3,10 @@
 	 * 搜索页
 	 * 搜索框 + 热搜词 + 搜索结果列表
 	 */
-	import { goto } from '$app/navigation';
 	import type { HotWord, Video } from '$lib/types';
-	import SearchBar from '$lib/components/SearchBar.svelte';
-	import VideoGrid from '$lib/components/VideoGrid.svelte';
-	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
+	import SearchBar from '$components/SearchBar.svelte';
+	import VideoCard from '$components/VideoCard.svelte';
+	import LoadingSpinner from '$components/LoadingSpinner.svelte';
 
 	let { data } = $props();
 
@@ -96,7 +95,11 @@
 				<p class="text-xs text-gray-400 mb-3">
 					找到 {searchResults.length} 个与"{keyword}"相关的结果
 				</p>
-				<VideoGrid videos={searchResults} />
+				<div class="grid grid-cols-2 gap-3">
+					{#each searchResults as video (video.id)}
+						<VideoCard {video} />
+					{/each}
+				</div>
 			</div>
 		{/if}
 	</div>

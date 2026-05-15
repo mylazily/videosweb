@@ -5,11 +5,28 @@
 
 // ========== 通用响应 ==========
 
+/** API 响应状态码 */
+export enum ApiCode {
+	SUCCESS = 0,
+	ERROR = -1,
+	UNAUTHORIZED = 401,
+	FORBIDDEN = 403,
+	NOT_FOUND = 404,
+	SERVER_ERROR = 500
+}
+
 /** API 统一响应结构 */
 export interface ApiResponse<T = unknown> {
 	code: number;
 	message: string;
 	data: T;
+}
+
+/** API 错误响应 */
+export interface ApiError {
+	code: number;
+	message: string;
+	details?: string;
 }
 
 /** 分页数据 */
@@ -19,6 +36,12 @@ export interface PaginatedData<T> {
 	page: number;
 	page_size: number;
 	total_pages: number;
+}
+
+/** 分页请求参数 */
+export interface PaginationParams {
+	page?: number;
+	page_size?: number;
 }
 
 // ========== 视频相关 ==========
@@ -65,6 +88,13 @@ export interface PlayInfo {
 	format: string;
 }
 
+/** 播放请求 */
+export interface PlayRequest {
+	video_id: string;
+	episode_id: string;
+	source_id: string;
+}
+
 // ========== 评论相关 ==========
 
 /** 评论 */
@@ -81,7 +111,24 @@ export interface Comment {
 	is_liked?: boolean;
 }
 
+/** 评论列表响应 */
+export interface CommentListResponse {
+	comments: Comment[];
+	total: number;
+	page: number;
+}
+
+/** 发表评论请求 */
+export interface AddCommentRequest {
+	video_id: string;
+	content: string;
+	parent_id?: string; // 回复的评论ID
+}
+
 // ========== 弹幕相关 ==========
+
+/** 弹幕类型 */
+export type DanmakuType = 'scroll' | 'top' | 'bottom';
 
 /** 弹幕 */
 export interface Danmaku {
@@ -89,9 +136,19 @@ export interface Danmaku {
 	time: number; // 出现时间（秒）
 	content: string;
 	color: string;
-	type: 'scroll' | 'top' | 'bottom';
+	type: DanmakuType;
 	font_size: number;
 	user_id: string;
+}
+
+/** 发送弹幕请求 */
+export interface SendDanmakuRequest {
+	video_id: string;
+	time: number;
+	content: string;
+	color?: string;
+	type?: DanmakuType;
+	font_size?: number;
 }
 
 // ========== 用户相关 ==========
@@ -125,6 +182,13 @@ export interface LoginResponse {
 	user: User;
 }
 
+/** 更新用户信息请求 */
+export interface UpdateUserRequest {
+	username?: string;
+	avatar?: string;
+	email?: string;
+}
+
 // ========== 搜索相关 ==========
 
 /** 搜索结果 */
@@ -132,6 +196,16 @@ export interface SearchResult {
 	videos: Video[];
 	total: number;
 	page: number;
+}
+
+/** 搜索请求 */
+export interface SearchRequest extends PaginationParams {
+	keyword: string;
+	filters?: {
+		category?: string;
+		year?: number;
+		area?: string;
+	};
 }
 
 /** 热搜词 */
@@ -150,6 +224,11 @@ export interface Category {
 	count: number;
 }
 
+/** 分类视频请求 */
+export interface CategoryVideosRequest extends PaginationParams {
+	slug: string;
+}
+
 // ========== 排行相关 ==========
 
 /** 排行榜项 */
@@ -159,6 +238,9 @@ export interface RankItem {
 	change: 'up' | 'down' | 'same';
 	change_value: number;
 }
+
+/** 排行榜类型 */
+export type RankType = 'daily' | 'weekly' | 'monthly' | 'all';
 
 // ========== 观看历史 ==========
 
@@ -172,6 +254,14 @@ export interface WatchHistory {
 	progress: number; // 播放进度（秒）
 	duration: number; // 总时长（秒）
 	watch_time: string;
+}
+
+/** 添加历史记录请求 */
+export interface AddHistoryRequest {
+	video_id: string;
+	episode_id: string;
+	progress: number;
+	duration: number;
 }
 
 // ========== 轮播图 ==========
@@ -194,4 +284,112 @@ export interface ApiDomain {
 	name: string;
 	alive: boolean;
 	latency: number;
+}
+
+// ========== 应用状态 ==========
+
+/** 主题模式 */
+export type ThemeMode = 'light' | 'dark' | 'system';
+
+/** 应用设置 */
+export interface AppSettings {
+	theme: ThemeMode;
+	autoplay: boolean;
+	danmakuEnabled: boolean;
+	danmakuOpacity: number;
+	danmakuFontSize: number;
+	volume: number;
+}
+
+// ========== 类型守卫 ==========
+
+/**
+ * 检查是否为有效的 API 响应
+ */
+export function isApiResponse<T>(obj: unknown): obj is ApiResponse<T> {
+	return (
+		typeof obj === 'object' &&
+		obj !== null &&
+		'code' in obj &&
+		typeof (obj as ApiResponse<T>).code === 'number' &&
+		'message' in obj &&
+		typeof (obj as ApiResponse<T>).message === 'string' &&
+		'data' in obj
+	);
+}
+
+/**
+ * 检查是否为有效的视频对象
+ */
+export function isVideo(obj: unknown): obj is Video {
+	return (
+		typeof obj === 'object' &&
+		obj !== null &&
+		'id' in obj &&
+		'title' in obj &&
+		'cover' in obj &&
+		'sources' in obj &&
+		Array.isArray((obj as Video).sources)
+	);
+}
+
+/**
+ * 检查是否为有效的用户对象
+ */
+export function isUser(obj: unknown): obj is User {
+	return (
+		typeof obj === 'object' &&
+		obj !== null &&
+		'id' in obj &&
+		'username' in obj &&
+		'avatar' in obj
+	);
+}
+
+/**
+ * 检查是否为有效的分页数据
+ */
+export function isPaginatedData<T>(obj: unknown): obj is PaginatedData<T> {
+	return (
+		typeof obj === 'object' &&
+		obj !== null &&
+		'list' in obj &&
+		Array.isArray((obj as PaginatedData<T>).list) &&
+		'total' in obj &&
+		typeof (obj as PaginatedData<T>).total === 'number' &&
+		'page' in obj &&
+		typeof (obj as PaginatedData<T>).page === 'number'
+	);
+}
+
+/**
+ * 检查 API 响应是否成功
+ */
+export function isSuccessResponse<T>(response: ApiResponse<T>): boolean {
+	return response.code === ApiCode.SUCCESS;
+}
+
+// ========== 工具类型 ==========
+
+/** 可空类型 */
+export type Nullable<T> = T | null;
+
+/** 可选类型 */
+export type Optional<T> = T | undefined;
+
+/** 深度只读类型 */
+export type DeepReadonly<T> = {
+	readonly [K in keyof T]: T[K] extends object ? DeepReadonly<T[K]> : T[K];
+};
+
+/** API 请求方法 */
+export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+
+/** 排序方向 */
+export type SortOrder = 'asc' | 'desc';
+
+/** 排序参数 */
+export interface SortParams {
+	field: string;
+	order: SortOrder;
 }
