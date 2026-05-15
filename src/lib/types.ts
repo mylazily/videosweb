@@ -393,3 +393,149 @@ export interface SortParams {
 	field: string;
 	order: SortOrder;
 }
+
+// ========== 标签相关 ==========
+
+/** 标签信息 */
+export interface Tag {
+	slug: string;
+	name: string;
+	description?: string;
+	video_count: number;
+	cover?: string;
+}
+
+/** 标签列表请求 */
+export interface TagListRequest extends PaginationParams {
+	keyword?: string;
+	sort?: 'popular' | 'latest' | 'name';
+}
+
+/** 标签视频请求 */
+export interface TagVideosRequest extends PaginationParams {
+	slug: string;
+}
+
+// ========== 短视频相关 ==========
+
+/** 短视频信息 */
+export interface ShortVideo {
+	id: string;
+	title: string;
+	cover: string;
+	preview_url?: string;
+	description: string;
+	duration: number; // 秒
+	play_count: number;
+	like_count: number;
+	share_count: number;
+	comment_count: number;
+	tags: string[];
+	author: {
+		id: string;
+		username: string;
+		avatar: string;
+	};
+	create_time: string;
+	video_url: string; // 播放地址
+}
+
+/** 短视频排序类型 */
+export type ShortSortType = 'popular' | 'latest' | 'random';
+
+/** 短视频列表请求 */
+export interface ShortListRequest extends PaginationParams {
+	sort?: ShortSortType;
+	tag?: string;
+}
+
+// ========== 推荐相关 ==========
+
+/** 推荐视频 */
+export interface RecommendVideo {
+	id: string;
+	title: string;
+	cover: string;
+	preview_url?: string;
+	play_count: number;
+	rating: number;
+	tags: string[];
+	reason?: string; // 推荐理由
+}
+
+/** 推荐列表请求 */
+export interface RecommendRequest extends PaginationParams {
+	video_id: string;
+}
+
+// ========== 分享相关 ==========
+
+/** 分享链接 */
+export interface ShareLink {
+	id: string;
+	url: string;
+	qrcode_url?: string;
+	share_count: number;
+	unlock_count: number;
+	max_unlock: number;
+	is_unlocked: boolean;
+}
+
+/** 分享解锁请求 */
+export interface ShareUnlockRequest {
+	video_id: string;
+	platform?: 'twitter' | 'telegram' | 'link';
+}
+
+/** 金币余额 */
+export interface CoinBalance {
+	amount: number;
+	frozen_amount: number;
+	total_earned: number;
+	total_spent: number;
+}
+
+/** 金币明细 */
+export interface CoinRecord {
+	id: string;
+	type: 'earn' | 'spend' | 'freeze' | 'unfreeze';
+	amount: number;
+	reason: string;
+	create_time: string;
+}
+
+/** 金币明细请求 */
+export interface CoinRecordRequest extends PaginationParams {
+	type?: 'earn' | 'spend' | 'all';
+}
+
+// ========== 设备相关 ==========
+
+/** 设备信息 */
+export interface DeviceProfile {
+	device_id: string;
+	platform: 'ios' | 'android' | 'web' | 'tablet';
+	os_version: string;
+	app_version: string;
+	screen_width: number;
+	screen_height: number;
+	network_type: 'wifi' | '4g' | '5g' | '3g' | 'unknown';
+}
+
+// ========== 播放线路延迟 ==========
+
+/** 线路延迟信息 */
+export interface SourceLatency {
+	source_id: string;
+	latency: number; // 毫秒
+	is_recommended: boolean;
+}
+
+/** 播放器事件回调 */
+export interface PlayerCallbacks {
+	onPlay?: () => void;
+	onPause?: () => void;
+	onEnded?: () => void;
+	onError?: (error: string) => void;
+	onTimeUpdate?: (currentTime: number, duration: number) => void;
+}

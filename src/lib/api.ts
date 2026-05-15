@@ -186,3 +186,124 @@ export function upload<T = unknown>(
 		timeout: 60000
 	});
 }
+
+// ========== 短视频 API ==========
+
+/**
+ * 获取短视频列表
+ */
+export function getShortList(params?: { page?: number; page_size?: number; sort?: string; tag?: string }) {
+	const query = new URLSearchParams();
+	if (params?.page) query.set('page', String(params.page));
+	if (params?.page_size) query.set('page_size', String(params.page_size));
+	if (params?.sort) query.set('sort', params.sort);
+	if (params?.tag) query.set('tag', params.tag);
+	const qs = query.toString();
+	return get(`/api/v1/shorts${qs ? `?${qs}` : ''}`);
+}
+
+/**
+ * 获取短视频详情
+ */
+export function getShortDetail(id: string) {
+	return get(`/api/v1/shorts/${id}`);
+}
+
+/**
+ * 点赞短视频
+ */
+export function likeShort(id: string) {
+	return post(`/api/v1/shorts/${id}/like`);
+}
+
+// ========== 标签 API ==========
+
+/**
+ * 获取标签列表
+ */
+export function getTagList(params?: { page?: number; page_size?: number; keyword?: string; sort?: string }) {
+	const query = new URLSearchParams();
+	if (params?.page) query.set('page', String(params.page));
+	if (params?.page_size) query.set('page_size', String(params.page_size));
+	if (params?.keyword) query.set('keyword', params.keyword);
+	if (params?.sort) query.set('sort', params.sort);
+	const qs = query.toString();
+	return get(`/api/v1/tags${qs ? `?${qs}` : ''}`);
+}
+
+/**
+ * 获取标签详情
+ */
+export function getTagDetail(slug: string) {
+	return get(`/api/v1/tags/${slug}`);
+}
+
+/**
+ * 获取标签下的视频
+ */
+export function getTagVideos(slug: string, params?: { page?: number; page_size?: number }) {
+	const query = new URLSearchParams();
+	if (params?.page) query.set('page', String(params.page));
+	if (params?.page_size) query.set('page_size', String(params.page_size));
+	const qs = query.toString();
+	return get(`/api/v1/tags/${slug}/videos${qs ? `?${qs}` : ''}`);
+}
+
+// ========== 推荐 API ==========
+
+/**
+ * 获取相关推荐视频
+ */
+export function getRelatedVideos(videoId: string, params?: { page?: number; page_size?: number }) {
+	const query = new URLSearchParams();
+	if (params?.page) query.set('page', String(params.page));
+	if (params?.page_size) query.set('page_size', String(params.page_size));
+	const qs = query.toString();
+	return get(`/api/v1/videos/${videoId}/related${qs ? `?${qs}` : ''}`);
+}
+
+// ========== 分享 API ==========
+
+/**
+ * 创建分享链接
+ */
+export function createShareLink(videoId: string) {
+	return post<{ share: import('./types').ShareLink }>('/api/v1/share/create', { video_id: videoId });
+}
+
+/**
+ * 分享解锁
+ */
+export function shareUnlock(data: { share_id: string; platform?: string }) {
+	return post('/api/v1/share/unlock', data);
+}
+
+// ========== 金币 API ==========
+
+/**
+ * 获取金币余额
+ */
+export function getCoinBalance() {
+	return get<{ balance: import('./types').CoinBalance }>('/api/v1/coin/balance');
+}
+
+/**
+ * 获取金币明细
+ */
+export function getCoinRecords(params?: { page?: number; page_size?: number; type?: string }) {
+	const query = new URLSearchParams();
+	if (params?.page) query.set('page', String(params.page));
+	if (params?.page_size) query.set('page_size', String(params.page_size));
+	if (params?.type) query.set('type', params.type);
+	const qs = query.toString();
+	return get(`/api/v1/coin/records${qs ? `?${qs}` : ''}`);
+}
+
+// ========== 设备 API ==========
+
+/**
+ * 注册设备信息
+ */
+export function registerDevice(deviceInfo: Record<string, unknown>) {
+	return post('/api/v1/device/register', deviceInfo);
+}

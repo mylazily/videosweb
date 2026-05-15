@@ -2,30 +2,37 @@
 	/**
 	 * hls.js 视频播放器组件
 	 * 支持播放/暂停、进度条、全屏、自动播放、错误重试、进度上报
-	 * 优化：添加错误边界、内存泄漏防护、更好的事件清理
+	 * 增强：多线路自动切换、播放进度上报、错误重试机制、播放器事件回调
 	 */
 	import { onMount, onDestroy } from 'svelte';
 	import Hls from 'hls.js';
 	import { decryptPlayUrl } from '$lib/crypto';
 	import { formatDuration } from '$lib/utils';
 	import { PLAYER_CONFIG } from '$lib/constants';
+	import type { PlayerCallbacks } from '$lib/types';
 
 	interface Props {
 		src: string;           // m3u8 地址（可能加密）
 		poster?: string;       // 封面图
 		autoPlay?: boolean;    // 自动播放
+		sources?: string[];    // 多线路播放地址列表（用于自动切换）
 		onTimeUpdate?: (currentTime: number, duration: number) => void;
 		onEnded?: () => void;
 		onError?: (error: string) => void;
+		onPlay?: () => void;
+		onPause?: () => void;
 	}
 
 	let {
 		src,
 		poster = '',
 		autoPlay = PLAYER_CONFIG.AUTO_PLAY,
+		sources = [],
 		onTimeUpdate,
 		onEnded,
-		onError
+		onError,
+		onPlay,
+		onPause
 	}: Props = $props();
 
 	// ========== 播放器状态 ==========
@@ -43,6 +50,15 @@
 	let retryCount = $state(0);
 	let hasError = $state(false);
 	let errorMessage = $state('');
+	let currentSourceIndex = $state(0); // 当前线路索引
+	let isSwitchingSource = $state(false); // 正在切换线路
+	const MAX_RETRY = 3; // 最大重试次数
+
+	// 所有可用线路（主线路 + 备用线路）
+	const allSources = $derived(
+		sources.length > 0 ? sources : [src]
+	);
+	const currentSource = $derived(allSources[currentSourceIndex] || src);
 
 	// ========== 定时器和引用 ==========
 	let progressTimer: ReturnType<typeof setInterval> | null = null;
@@ -61,7 +77,11 @@
 	 * 初始化播放器
 	 */
 	function initPlayer(): void {
-		if (!videoEl || !src || isDestroyed) return;
+		if (!videoEl || isDestroyed) return;
+
+		// 使用当前线路地址
+		const currentSrc = allSources[currentSourceIndex] || src;
+		if (!currentSrc) return;
 
 		// 清理旧实例
 		destroyPlayer();
@@ -71,10 +91,10 @@
 		errorMessage = '';
 
 		// 解密播放地址
-		let playUrl = src;
-		if (src.includes('==') || src.includes('/')) {
+		let playUrl = currentSrc;
+		if (currentSrc.includes('==') || currentSrc.includes('/')) {
 			try {
-				const decrypted = decryptPlayUrl(src);
+				const decrypted = decryptPlayUrl(currentSrc);
 				if (decrypted.startsWith('http')) {
 					playUrl = decrypted;
 				}
@@ -94,7 +114,7 @@
 				initStandardPlayer(playUrl);
 			}
 		} catch (error) {
-			handlePlayerError('播放器初始化失败');
+			handlePlayerErrorWithRetry('播放器初始化失败');
 		}
 	}
 
@@ -134,18 +154,18 @@
 			if (data.fatal) {
 				switch (data.type) {
 					case Hls.ErrorTypes.NETWORK_ERROR:
-						if (retryCount < 3) {
+						if (retryCount < MAX_RETRY) {
 							retryCount++;
 							hls.startLoad();
 						} else {
-							handlePlayerError('网络错误，请检查网络连接');
+							handlePlayerErrorWithRetry('网络错误，请检查网络连接');
 						}
 						break;
 					case Hls.ErrorTypes.MEDIA_ERROR:
 						hls.recoverMediaError();
 						break;
 					default:
-						handlePlayerError('播放出错，请稍后重试');
+						handlePlayerErrorWithRetry('播放出错，请稍后重试');
 						break;
 				}
 			}
@@ -192,11 +212,40 @@
 	 */
 	function handleVideoError(): void {
 		if (isDestroyed) return;
-		handlePlayerError('视频加载失败');
+		handlePlayerErrorWithRetry('视频加载失败');
 	}
 
 	/**
-	 * 处理播放器错误
+	 * 带自动切换线路的错误处理
+	 * 当前线路重试 MAX_RETRY 次后，自动切换到下一条线路
+	 */
+	function handlePlayerErrorWithRetry(message: string): void {
+		// 尝试切换到下一条线路
+		if (allSources.length > 1 && currentSourceIndex < allSources.length - 1) {
+			currentSourceIndex++;
+			retryCount = 0;
+			isSwitchingSource = true;
+			console.log(`[播放器] 切换到线路 ${currentSourceIndex + 1}/${allSources.length}`);
+			// 延迟切换，给用户提示
+			setTimeout(() => {
+				isSwitchingSource = false;
+				initPlayer();
+			}, 500);
+			return;
+		}
+
+		// 所有线路都失败
+		hasError = true;
+		errorMessage = allSources.length > 1
+			? `${message}（已尝试 ${allSources.length} 条线路）`
+			: message;
+		isLoading = false;
+		onError?.(errorMessage);
+		destroyPlayer();
+	}
+
+	/**
+	 * 处理播放器错误（不自动切换）
 	 */
 	function handlePlayerError(message: string): void {
 		hasError = true;
@@ -293,9 +342,10 @@
 	}
 
 	/**
-	 * 重试播放
+	 * 重试播放（重置所有线路）
 	 */
 	function retryPlay(): void {
+		currentSourceIndex = 0;
 		retryCount = 0;
 		hasError = false;
 		errorMessage = '';
@@ -403,8 +453,8 @@
 		class="w-full aspect-video object-contain"
 		{poster}
 		playsinline
-		onplay={() => { isPlaying = true; startProgressReport(); }}
-		onpause={() => { isPlaying = false; }}
+		onplay={() => { isPlaying = true; startProgressReport(); onPlay?.(); }}
+		onpause={() => { isPlaying = false; onPause?.(); }}
 		onwaiting={() => { isLoading = true; }}
 		oncanplay={() => { isLoading = false; }}
 		onended={() => { isPlaying = false; onEnded?.(); }}
@@ -417,13 +467,26 @@
 			<svg class="w-12 h-12 text-white/60 mb-3" viewBox="0 0 24 24" fill="currentColor">
 				<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
 			</svg>
-			<p class="text-white/80 text-sm mb-4">{errorMessage}</p>
+			<p class="text-white/80 text-sm mb-2">{errorMessage}</p>
+			{#if allSources.length > 1}
+				<p class="text-white/50 text-xs mb-4">已尝试 {allSources.length} 条线路</p>
+			{/if}
 			<button
 				onclick={retryPlay}
 				class="px-4 py-2 bg-bilibili text-white rounded-full text-sm btn-press"
 			>
 				重新加载
 			</button>
+		</div>
+	{/if}
+
+	<!-- 线路切换中提示 -->
+	{#if isSwitchingSource && !hasError}
+		<div class="absolute inset-0 flex items-center justify-center bg-black/50 z-20">
+			<div class="text-center">
+				<div class="w-8 h-8 border-2 border-bilibili/30 border-t-bilibili rounded-full animate-spin mx-auto mb-2"></div>
+				<p class="text-white/80 text-xs">正在切换线路 ({currentSourceIndex + 1}/{allSources.length})...</p>
+			</div>
 		</div>
 	{/if}
 

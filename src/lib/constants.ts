@@ -48,7 +48,36 @@ export const API_PATHS = {
 	HOME_HOT_WORDS: '/api/home/hot-words',
 
 	// 健康检查
-	HEALTH: '/api/health'
+	HEALTH: '/api/health',
+
+	// 短视频相关
+	SHORT_LIST: '/api/v1/shorts',
+	SHORT_DETAIL: '/api/v1/shorts',
+	SHORT_LIKE: '/api/v1/shorts',
+	SHORT_SHARE: '/api/v1/shorts',
+
+	// 标签相关
+	TAG_LIST: '/api/v1/tags',
+	TAG_DETAIL: '/api/v1/tags',
+	TAG_VIDEOS: '/api/v1/tags',
+
+	// 推荐相关
+	VIDEO_RELATED: '/api/v1/videos',
+
+	// 分享相关
+	SHARE_CREATE: '/api/v1/share',
+	SHARE_UNLOCK: '/api/v1/share',
+
+	// 金币相关
+	COIN_BALANCE: '/api/v1/coin/balance',
+	COIN_RECORDS: '/api/v1/coin/records',
+
+	// 设备相关
+	DEVICE_REGISTER: '/api/v1/device/register',
+
+	// SEO
+	SITEMAP: '/sitemap.xml',
+	ROBOTS: '/robots.txt'
 } as const;
 
 // ========== 分类列表 ==========
@@ -125,9 +154,9 @@ export const THEME = {
 
 export const NAV_ITEMS = [
 	{ path: '/', label: '首页', icon: 'home' },
+	{ path: '/short', label: '短视频', icon: 'video' },
 	{ path: '/category/movie', label: '分类', icon: 'grid' },
 	{ path: '/rank', label: '排行', icon: 'trophy' },
-	{ path: '/history', label: '历史', icon: 'clock' },
 	{ path: '/profile', label: '我的', icon: 'user' }
 ] as const;
 

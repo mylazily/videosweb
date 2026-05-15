@@ -20,6 +20,8 @@
 		if (path.startsWith('/search')) return '搜索';
 		if (path.startsWith('/category')) return '分类';
 		if (path.startsWith('/video')) return '视频详情';
+		if (path.startsWith('/short')) return '短视频';
+		if (path.startsWith('/tags')) return '标签';
 		if (path.startsWith('/rank')) return '排行榜';
 		if (path.startsWith('/history')) return '观看历史';
 		if (path.startsWith('/profile')) return '个人中心';
@@ -31,7 +33,7 @@
 	// 是否显示底部导航栏
 	const showNavBar = $derived(() => {
 		const path = page.url.pathname;
-		return !path.startsWith('/login') && !path.startsWith('/register') && !path.startsWith('/video');
+		return !path.startsWith('/login') && !path.startsWith('/register') && !path.startsWith('/video') && !path.startsWith('/short/');
 	});
 
 	// 是否显示返回按钮
