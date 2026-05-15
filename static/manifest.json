@@ -1,0 +1,28 @@
+{
+	"name": "XVideos 影视",
+	"short_name": "XVideos",
+	"description": "XVideos 影视聚合系统 - 高清影视在线观看",
+	"start_url": "/",
+	"display": "standalone",
+	"orientation": "portrait",
+	"background_color": "#17181A",
+	"theme_color": "#FB7299",
+	"lang": "zh-CN",
+	"categories": ["entertainment", "video"],
+	"icons": [
+		{
+			"src": "/icons/icon-192.png",
+			"sizes": "192x192",
+			"type": "image/png",
+			"purpose": "any maskable"
+		},
+		{
+			"src": "/icons/icon-512.png",
+			"sizes": "512x512",
+			"type": "image/png",
+			"purpose": "any maskable"
+		}
+	],
+	"screenshots": [],
+	"prefer_related_applications": false
+}

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+
+		<!-- PWA 基础配置 -->
+		<meta name="theme-color" content="#FB7299" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+		<meta name="apple-mobile-web-app-title" content="XVideos" />
+		<meta name="application-name" content="XVideos 影视" />
+		<meta name="description" content="XVideos 影视聚合系统 - 高清影视在线观看" />
+		<meta name="format-detection" content="telephone=no" />
+
+		<!-- PWA Manifest -->
+		<link rel="manifest" href="/manifest.json" />
+
+		<!-- Apple Touch Icon -->
+		<link rel="apple-touch-icon" href="/icons/icon-192.png" />
+		<link rel="apple-touch-icon" sizes="512x512" href="/icons/icon-512.png" />
+
+		<!-- Favicon -->
+		<link rel="icon" type="image/png" href="/icons/icon-192.png" />
+
+		<!-- 预连接 -->
+		%sveltekit.head%
+	</head>
+	<body data-sveltekit-preload-data="hover">
+		<div style="display: contents">%sveltekit.body%</div>
+
+		<!-- 注册 Service Worker -->
+		<script>
+			if ('serviceWorker' in navigator) {
+				window.addEventListener('load', () => {
+					navigator.serviceWorker.register('/sw.js').catch(() => {});
+				});
+			}
+		</script>
+	</body>
+</html>
