@@ -7,6 +7,7 @@
 	import type { Video, Comment, Danmaku, PlayLine } from '$lib/types';
 	import { formatPlayCount, formatRating, setPageTitle } from '$lib/utils';
 	import VideoPlayer from '$components/VideoPlayer.svelte';
+	import P2PVideoPlayer from '$components/P2PVideoPlayer.svelte';
 	import DanmakuLayer from '$components/DanmakuLayer.svelte';
 	import SourceSwitcher from '$components/SourceSwitcher.svelte';
 	import EpisodeList from '$components/EpisodeList.svelte';
@@ -24,6 +25,7 @@
 	let playLines = $state<PlayLine[]>(data.playLines || []);
 	let domainPool = $state<string[]>(data.domainPool || []);
 	let sharedPath = $state<string>(data.sharedPath || '');
+	let videoId = $state<string>(video.id);
 
 	// 播放状态
 	let currentLineIndex = $state(0);
@@ -146,18 +148,13 @@
 <div class="pb-16">
 	<!-- 视频播放器 + 弹幕层 -->
 	<div class="relative">
-		<VideoPlayer
+		<P2PVideoPlayer
 			{playLines}
 			{domainPool}
 			{sharedPath}
-			videoId={video.id}
+			{videoId}
 			onLineChange={handleLineChange}
-			poster={video.cover}
-			callbacks={{
-				onTimeUpdate: handleTimeUpdate,
-				onEnded: () => console.log('播放结束'),
-				onError: (err: string) => console.error('播放错误:', err)
-			}}
+			onTimeUpdate={(time: number) => handleTimeUpdate(time, 0)}
 		/>
 		<DanmakuLayer
 			danmakus={danmakus}

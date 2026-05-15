@@ -899,3 +899,25 @@ export interface WSDanmakuMessage {
 
 /** WebSocket 连接状态 */
 export type WSConnectionState = 'disconnected' | 'connecting' | 'connected' | 'reconnecting';
+
+// ========== P2P HLS 播放器相关 ==========
+
+/** P2P 统计数据 */
+export interface P2PStats {
+	p2pDownloaded: number;     // P2P 下载量（字节）
+	httpDownloaded: number;    // HTTP 下载量（字节）
+	p2pPeers: number;          // P2P 节点数
+	p2pSpeed: number;          // P2P 速度（字节/秒）
+	httpSpeed: number;         // HTTP 速度（字节/秒）
+	bufferLength: number;      // 缓冲区长度（秒）
+	isP2PAvailable: boolean;   // P2P 是否可用
+}
+
+/** 资源站探活状态 */
+export interface StationStatus {
+	name: string;
+	isAlive: boolean;
+	latency: number;           // 延迟（ms）
+	speed: number;             // 下载速度（KB/s）
+	lastCheck: string;         // 最后检查时间
+}

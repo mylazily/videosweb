@@ -368,3 +368,32 @@ export const DOMAIN_SWITCH_TIMEOUT = 100;
 
 /** 域名轮询 API 路径 */
 export const DOMAIN_ROTATION_PATH = '/api/v1/domain/rotation';
+
+// ========== P2P HLS 播放器配置 ==========
+
+export const P2P_CONFIG = {
+	/** HTTP 下载超时（毫秒） */
+	HTTP_DOWNLOAD_TIMEOUT: 5000,
+	/** 同时从资源站下载的切片数 */
+	SIMULTANEOUS_HTTP_DOWNLOADS: 2,
+	/** 最大缓冲时长（秒） */
+	MAX_BUFFER_LENGTH: 60,
+	/** 高峰期极限缓冲时长（秒） */
+	MAX_MAX_BUFFER_LENGTH: 120,
+	/** 自动跳过卡顿死点阈值（秒） */
+	MAX_BUFFER_HOLE: 0.5,
+	/** 回放缓冲保留时长（秒） */
+	BACK_BUFFER_LENGTH: 30,
+	/** 低速阈值（字节/秒）—— 100KB/s */
+	LOW_SPEED_THRESHOLD: 100 * 1024,
+	/** 高速阈值（字节/秒）—— 500KB/s */
+	HIGH_SPEED_THRESHOLD: 500 * 1024,
+	/** P2P 统计刷新间隔（毫秒） */
+	STATS_UPDATE_INTERVAL: 1000,
+	/** 缓冲区动态优化检测间隔（毫秒） */
+	BUFFER_OPTIMIZE_INTERVAL: 3000,
+	/** 低速时降低的预加载阈值（秒） */
+	LOW_SPEED_BUFFER_LENGTH: 15,
+	/** 低速时降低的极限缓冲时长（秒） */
+	LOW_SPEED_MAX_BUFFER_LENGTH: 30
+};
