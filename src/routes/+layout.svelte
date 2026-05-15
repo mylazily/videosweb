@@ -2,16 +2,25 @@
 	/**
 	 * 全局布局
 	 * 顶部 HeaderBar + 底部 NavBar + 内容区域
+	 * 集成 Push 推送提示、PWA 安装引导
 	 */
+	import { onMount } from 'svelte';
 	import { page } from '$app/state';
 	import NavBar from '$components/NavBar.svelte';
 	import HeaderBar from '$components/HeaderBar.svelte';
+	import PushPrompt from '$components/PushPrompt.svelte';
+	import { initPWAInstall } from '$lib/pwa/install';
+	import { isPushSupported, isSubscribed } from '$lib/push/subscription';
+	import { PUSH_PROMPT_DELAY } from '$lib/constants';
 
 	interface Props {
 		children: import('svelte').Snippet;
 	}
 
 	let { children }: Props = $props();
+
+	// Push 提示显示状态
+	let showPushPrompt = $state(false);
 
 	// 当前页面标题
 	const pageTitle = $derived(() => {
@@ -41,6 +50,22 @@
 		const path = page.url.pathname;
 		return path !== '/' && !path.startsWith('/category/') && !path.startsWith('/search');
 	});
+
+	onMount(async () => {
+		// 初始化 PWA 安装监听
+		initPWAInstall();
+
+		// 延迟检测是否需要显示 Push 提示
+		if (isPushSupported()) {
+			const subscribed = await isSubscribed();
+			if (!subscribed) {
+				// 延迟显示，避免影响首屏加载
+				setTimeout(() => {
+					showPushPrompt = true;
+				}, PUSH_PROMPT_DELAY);
+			}
+		}
+	});
 </script>
 
 <div class="flex flex-col h-screen bg-gray-50 dark:bg-dark-bg overflow-hidden">
@@ -57,3 +82,8 @@
 		<NavBar />
 	{/if}
 </div>
+
+<!-- Push 推送订阅引导弹窗 -->
+{#if showPushPrompt}
+	<PushPrompt />
+{/if}

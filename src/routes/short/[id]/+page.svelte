@@ -2,11 +2,13 @@
 	/**
 	 * 短视频播放详情页
 	 * 全屏播放器 + 弹幕层 + 视频信息 + 上下滑动切换
+	 * 使用 LazyImage 实现头像懒加载
 	 */
 	import { onMount } from 'svelte';
 	import type { ShortVideo, Comment, Danmaku } from '$lib/types';
 	import { formatPlayCount, formatDuration, setPageTitle, copyToClipboard } from '$lib/utils';
 	import DanmakuLayer from '$components/DanmakuLayer.svelte';
+	import LazyImage from '$components/LazyImage.svelte';
 
 	let { data } = $props();
 
@@ -142,11 +144,13 @@
 		<div class="absolute right-3 bottom-32 flex flex-col items-center gap-5">
 			<!-- 作者头像 -->
 			<a href="/profile" class="relative">
-				<img
+				<LazyImage
 					src={short.author.avatar}
 					alt={short.author.username}
-					class="w-10 h-10 rounded-full border-2 border-white"
-					referrerpolicy="no-referrer"
+					width="40px"
+					height="40px"
+					objectFit="cover"
+					rounded="rounded-full border-2 border-white"
 				/>
 				<div class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-5 h-5 bg-bilibili rounded-full flex items-center justify-center">
 					<svg class="w-3 h-3 text-white" viewBox="0 0 24 24" fill="currentColor">

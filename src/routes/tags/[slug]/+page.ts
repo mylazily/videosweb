@@ -1,7 +1,11 @@
 /**
  * 标签详情页数据加载
+ * 增强预渲染支持
  */
 import type { Tag, Video } from '$lib/types';
+
+// 预渲染配置
+export const prerender = true;
 
 // 模拟标签数据
 const mockTags: Record<string, Tag> = {

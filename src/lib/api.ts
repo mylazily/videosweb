@@ -307,3 +307,83 @@ export function getCoinRecords(params?: { page?: number; page_size?: number; typ
 export function registerDevice(deviceInfo: Record<string, unknown>) {
 	return post('/api/v1/device/register', deviceInfo);
 }
+
+// ========== P2P API ==========
+
+/**
+ * 注册 P2P 节点
+ */
+export function registerP2PPeer(peerId: string) {
+	return post<{ peer: import('./types').Peer }>('/api/v1/p2p/register', { peer_id: peerId });
+}
+
+/**
+ * 获取 P2P 房间内的节点列表
+ */
+export function getP2PRoomPeers(roomId: string) {
+	return get<{ peers: import('./types').Peer[] }>(`/api/v1/p2p/room/peers?room_id=${encodeURIComponent(roomId)}`);
+}
+
+/**
+ * 上报 P2P 传输日志
+ */
+export function reportP2PTransfer(log: Omit<import('./types').TransferLog, 'id' | 'create_time'>) {
+	return post('/api/v1/p2p/transfer/log', log);
+}
+
+/**
+ * 获取 P2P 节点统计信息
+ */
+export function getP2PStats() {
+	return get<{ total_peers: number; active_connections: number; total_transfers: number }>('/api/v1/p2p/stats');
+}
+
+// ========== Push 推送 API ==========
+
+/**
+ * 订阅 Push 推送
+ */
+export function subscribePushAPI(subscription: import('./types').PushSubscriptionInfo) {
+	return post('/api/v1/push/subscribe', subscription);
+}
+
+/**
+ * 取消 Push 订阅
+ */
+export function unsubscribePushAPI(endpoint: string) {
+	return post('/api/v1/push/unsubscribe', { endpoint });
+}
+
+/**
+ * 获取推送历史记录
+ */
+export function getPushHistory(params?: { page?: number; page_size?: number }) {
+	const query = new URLSearchParams();
+	if (params?.page) query.set('page', String(params.page));
+	if (params?.page_size) query.set('page_size', String(params.page_size));
+	const qs = query.toString();
+	return get(`/api/v1/push/history${qs ? `?${qs}` : ''}`);
+}
+
+// ========== 站群管理 API ==========
+
+/**
+ * 获取站群域名列表
+ */
+export function getClusterDomains() {
+	return get<{ domains: import('./types').SiteDomain[] }>('/api/v1/cluster/domains');
+}
+
+/**
+ * 获取站群重定向规则
+ */
+export function getRedirectRules() {
+	return get<{ rules: import('./types').RedirectRule[] }>('/api/v1/cluster/redirects');
+}
+
+/**
+ * 上报站点访问信息
+ */
+export function reportSiteVisit(data: { domain: string; path: string; ua?: string; referrer?: string }) {
+	return post('/api/v1/cluster/visit', data);
+}

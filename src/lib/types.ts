@@ -539,3 +539,141 @@ export interface PlayerCallbacks {
 	onError?: (error: string) => void;
 	onTimeUpdate?: (currentTime: number, duration: number) => void;
 }
+
+// ========== P2P 相关 ==========
+
+/** P2P 节点信息 */
+export interface Peer {
+	peer_id: string;
+	display_name?: string;
+	is_connected: boolean;
+	connected_at?: string;
+	last_heartbeat?: string;
+	shared_videos: string[]; // 分享的视频 ID 列表
+}
+
+/** P2P 信令消息 */
+export interface Signal {
+	type: 'offer' | 'answer' | 'ice-candidate' | 'heartbeat' | 'request' | 'response';
+	from_peer_id: string;
+	to_peer_id: string;
+	target_room_id?: string;
+	sdp?: string;
+	candidate?: RTCIceCandidateInit;
+	data?: unknown;
+	timestamp: string;
+}
+
+/** P2P 数据传输日志 */
+export interface TransferLog {
+	id: string;
+	video_id: string;
+	from_peer_id: string;
+	to_peer_id: string;
+	data_type: 'm3u8' | 'chunk' | 'metadata';
+	data_size: number; // 字节
+	duration: number; // 毫秒
+	status: 'success' | 'failed' | 'timeout';
+	create_time: string;
+}
+
+/** P2P 连接状态 */
+export type P2PConnectionState = 'disconnected' | 'connecting' | 'connected' | 'reconnecting' | 'failed';
+
+/** P2P 数据消息 */
+export interface P2PDataMessage {
+	type: 'm3u8_request' | 'm3u8_response' | 'heartbeat' | 'peer_list';
+	video_id?: string;
+	m3u8_data?: string;
+	peers?: Peer[];
+	timestamp: string;
+}
+
+// ========== Push 推送相关 ==========
+
+/** Push 订阅信息 */
+export interface PushSubscriptionInfo {
+	endpoint: string;
+	keys: {
+		p256dh: string;
+		auth: string;
+	};
+	fingerprint_id?: string;
+	subscribed_at: string;
+}
+
+/** Push 通知消息 */
+export interface PushNotification {
+	title: string;
+	body: string;
+	icon?: string;
+	badge?: string;
+	tag?: string;
+	data?: {
+		url?: string;
+		video_id?: string;
+		type?: string;
+	};
+	actions?: {
+		action: string;
+		title: string;
+		icon?: string;
+	}[];
+}
+
+/** Push 权限状态 */
+export type PushPermissionStatus = 'granted' | 'denied' | 'default' | 'unsupported';
+
+// ========== 站群相关 ==========
+
+/** 站群域名配置 */
+export interface SiteDomain {
+	domain: string;
+	cluster: 'A' | 'B'; // 集群分组
+	is_primary: boolean; // 是否为主域名
+	is_active: boolean; // 是否激活
+	ssl: boolean;
+	redirect_to?: string; // 重定向目标
+}
+
+/** 站群重定向规则 */
+export interface RedirectRule {
+	source_domain: string;
+	target_domain: string;
+	priority: number;
+	conditions: {
+		ua_pattern?: string; // UA 匹配规则
+		geo_pattern?: string; // 地理位置规则
+		path_pattern?: string; // 路径匹配规则
+	};
+	enabled: boolean;
+}
+
+/** 集群类型 */
+export type ClusterType = 'A' | 'B' | 'unknown';
+
+/** UA 检测结果 */
+export interface UADetectionResult {
+	is_mobile: boolean;
+	is_tablet: boolean;
+	is_desktop: boolean;
+	is_from_social: boolean;
+	social_platform?: 'twitter' | 'telegram' | 'facebook' | 'weibo' | 'wechat' | 'unknown';
+	browser: {
+		name: string;
+		version: string;
+		engine: string;
+	};
+	os: {
+		name: string;
+		version: string;
+	};
+	device: {
+		vendor?: string;
+		model?: string;
+		screen_width: number;
+		screen_height: number;
+		pixel_ratio: number;
+	};
+	raw_ua: string;
+}

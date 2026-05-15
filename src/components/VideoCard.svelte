@@ -2,9 +2,11 @@
 	/**
 	 * 视频卡片组件
 	 * 显示封面 + 标题 + 标签 + 评分
+	 * 使用 LazyImage 实现图片懒加载
 	 */
 	import type { Video } from '$lib/types';
 	import { formatPlayCount, formatRating } from '$lib/utils';
+	import LazyImage from '$components/LazyImage.svelte';
 
 	interface Props {
 		video: Video;
@@ -26,12 +28,12 @@
 		<!-- 横向卡片 -->
 		<div class="flex gap-3 p-2">
 			<div class="cover-16-9 w-[140px] flex-shrink-0 rounded-md">
-				<img
+				<LazyImage
 					src={video.cover}
 					alt={video.title}
-					loading="lazy"
-					referrerpolicy="no-referrer"
-					class="rounded-md"
+					width="100%"
+					height="100%"
+					rounded="rounded-md"
 				/>
 				{#if showPlayCount}
 					<span class="absolute bottom-1 right-1 px-1.5 py-0.5 text-[10px] text-white bg-black/60 rounded">
@@ -63,11 +65,11 @@
 	{:else}
 		<!-- 竖向卡片 -->
 		<div class="cover-16-9">
-			<img
+			<LazyImage
 				src={video.cover}
 				alt={video.title}
-				loading="lazy"
-				referrerpolicy="no-referrer"
+				width="100%"
+				height="100%"
 			/>
 			{#if showPlayCount}
 				<span class="absolute bottom-1 right-1 px-1.5 py-0.5 text-[10px] text-white bg-black/60 rounded">

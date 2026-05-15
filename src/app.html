@@ -41,6 +41,63 @@
 		}
 		</script>
 
+		<!-- 结构化数据 JSON-LD（Article Schema - 用于标签页） -->
+		<script type="application/ld+json">
+		{
+			"@context": "https://schema.org",
+			"@type": "WebPage",
+			"@id": "https://xvideos.com",
+			"name": "XVideos 影视聚合系统",
+			"description": "在线观看最新电影、电视剧、动漫、综艺、短视频",
+			"publisher": {
+				"@type": "Organization",
+				"name": "XVideos 影视",
+				"logo": {
+					"@type": "ImageObject",
+					"url": "https://xvideos.com/icons/icon-512.png"
+				}
+			},
+			"inLanguage": "zh-CN"
+		}
+		</script>
+
+		<!-- 结构化数据 JSON-LD（BreadcrumbList Schema - 面包屑导航） -->
+		<script type="application/ld+json">
+		{
+			"@context": "https://schema.org",
+			"@type": "BreadcrumbList",
+			"itemListElement": [
+				{
+					"@type": "ListItem",
+					"position": 1,
+					"name": "首页",
+					"item": "https://xvideos.com"
+				}
+			]
+		}
+		</script>
+
+		<!-- 结构化数据 JSON-LD（VideoObject Schema - 用于视频页） -->
+		<script type="application/ld+json">
+		{
+			"@context": "https://schema.org",
+			"@type": "VideoObject",
+			"name": "XVideos 影视",
+			"description": "在线观看最新电影、电视剧、动漫、综艺、短视频",
+			"thumbnailUrl": "https://xvideos.com/icons/icon-512.png",
+			"uploadDate": "2024-01-01",
+			"publisher": {
+				"@type": "Organization",
+				"name": "XVideos 影视",
+				"logo": {
+					"@type": "ImageObject",
+					"url": "https://xvideos.com/icons/icon-512.png"
+				}
+			},
+			"inLanguage": "zh-CN"
+		}
+		</script>
+
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">

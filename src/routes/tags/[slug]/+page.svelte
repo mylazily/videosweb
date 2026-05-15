@@ -2,11 +2,13 @@
 	/**
 	 * 标签详情页
 	 * 标签信息 + 视频瀑布流列表 + 分页加载
+	 * 使用 LazyImage 实现标签封面懒加载
 	 */
 	import type { Tag, Video } from '$lib/types';
 	import { formatPlayCount, setPageTitle } from '$lib/utils';
 	import VideoCardPreview from '$components/VideoCardPreview.svelte';
 	import InfiniteScroll from '$components/InfiniteScroll.svelte';
+	import LazyImage from '$components/LazyImage.svelte';
 
 	let { data } = $props();
 
@@ -62,11 +64,13 @@
 	<div class="px-4 pt-3 pb-4">
 		<div class="flex items-center gap-3">
 			{#if tag.cover}
-				<img
+				<LazyImage
 					src={tag.cover}
 					alt={tag.name}
-					class="w-16 h-16 rounded-xl object-cover"
-					referrerpolicy="no-referrer"
+					width="64px"
+					height="64px"
+					objectFit="cover"
+					rounded="rounded-xl"
 				/>
 			{:else}
 				<div class="w-16 h-16 rounded-xl bg-bilibili/10 flex items-center justify-center flex-shrink-0">

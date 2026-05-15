@@ -3,10 +3,12 @@
 	 * 短视频专区页面
 	 * B站短视频区风格的卡片列表布局
 	 * 顶部横向分类标签 + 瀑布流/网格布局 + 无限滚动 + 下拉刷新
+	 * 使用 LazyImage 实现封面图懒加载
 	 */
 	import type { ShortVideo } from '$lib/types';
 	import { formatPlayCount, formatDuration } from '$lib/utils';
 	import PreviewThumbnail from '$components/PreviewThumbnail.svelte';
+	import LazyImage from '$components/LazyImage.svelte';
 	import PullRefresh from '$components/PullRefresh.svelte';
 	import SkeletonCard from '$components/SkeletonCard.svelte';
 
@@ -168,12 +170,14 @@
 								{short.title}
 							</h3>
 							<div class="flex items-center gap-1.5 mt-1.5">
-								<img
+								<LazyImage
 									src={short.author.avatar}
 									alt={short.author.username}
-									class="w-4 h-4 rounded-full"
-									referrerpolicy="no-referrer"
-									loading="lazy"
+									width="16px"
+									height="16px"
+									objectFit="cover"
+									rounded="rounded-full"
+									class="inline-block"
 								/>
 								<span class="text-[10px] text-gray-400 truncate">{short.author.username}</span>
 							</div>

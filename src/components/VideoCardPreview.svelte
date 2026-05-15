@@ -3,9 +3,11 @@
 	 * 动态封面预览组件
 	 * 基于 VideoCard 增强，添加鼠标悬停动态预览
 	 * 支持预加载、骨架动画、静默降级
+	 * 使用 LazyImage 实现图片懒加载
 	 */
 	import type { Video } from '$lib/types';
 	import { formatPlayCount, formatRating } from '$lib/utils';
+	import LazyImage from '$components/LazyImage.svelte';
 
 	interface Props {
 		video: Video;
@@ -76,13 +78,24 @@
 				onmouseenter={handleMouseEnter}
 				onmouseleave={handleMouseLeave}
 			>
-				<img
-					src={displayCover}
-					alt={video.title}
-					loading="lazy"
-					referrerpolicy="no-referrer"
-					class="rounded-md transition-opacity duration-300"
-				/>
+				{#if showPreview}
+					<!-- 预览图（已加载完成，直接显示） -->
+					<img
+						src={displayCover}
+						alt={video.title}
+						referrerpolicy="no-referrer"
+						class="rounded-md transition-opacity duration-300 w-full h-full object-cover"
+					/>
+				{:else}
+					<!-- 默认使用 LazyImage -->
+					<LazyImage
+						src={video.cover}
+						alt={video.title}
+						width="100%"
+						height="100%"
+						rounded="rounded-md"
+					/>
+				{/if}
 				{#if isHovering && !previewLoaded && !previewFailed}
 					<!-- 预览加载中骨架动画 -->
 					<div class="absolute inset-0 rounded-md skeleton-shimmer"></div>
@@ -121,13 +134,23 @@
 			onmouseenter={handleMouseEnter}
 			onmouseleave={handleMouseLeave}
 		>
-			<img
-				src={displayCover}
-				alt={video.title}
-				loading="lazy"
-				referrerpolicy="no-referrer"
-				class="transition-opacity duration-300"
-			/>
+			{#if showPreview}
+				<!-- 预览图（已加载完成，直接显示） -->
+				<img
+					src={displayCover}
+					alt={video.title}
+					referrerpolicy="no-referrer"
+					class="transition-opacity duration-300 w-full h-full object-cover"
+				/>
+			{:else}
+				<!-- 默认使用 LazyImage -->
+				<LazyImage
+					src={video.cover}
+					alt={video.title}
+					width="100%"
+					height="100%"
+				/>
+			{/if}
 			{#if isHovering && !previewLoaded && !previewFailed}
 				<!-- 预览加载中骨架动画 -->
 				<div class="absolute inset-0 skeleton-shimmer"></div>

@@ -3,12 +3,14 @@
 /**
  * Service Worker
  * 优化：改进缓存策略、添加后台同步、优化离线体验
+ * 增强：P2P 数据缓存、Push 事件监听、通知点击处理、后台同步
  */
 
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const STATIC_CACHE = `xvideos-static-${CACHE_VERSION}`;
 const API_CACHE = `xvideos-api-${CACHE_VERSION}`;
 const IMAGE_CACHE = `xvideos-images-${CACHE_VERSION}`;
+const P2P_CACHE = `xvideos-p2p-${CACHE_VERSION}`;
 
 // 需要预缓存的静态资源
 const PRECACHE_URLS = [
@@ -145,6 +147,20 @@ function isApiRequest(url) {
 }
 
 /**
+ * 判断是否为 P2P 信令请求
+ */
+function isP2PRequest(url) {
+	return url.pathname.startsWith('/api/v1/p2p/');
+}
+
+/**
+ * 判断是否为 Push 相关请求
+ */
+function isPushRequest(url) {
+	return url.pathname.startsWith('/api/v1/push/');
+}
+
+/**
  * 判断是否为静态资源请求
  */
 function isStaticRequest(url) {
@@ -268,6 +284,32 @@ self.addEventListener('fetch', (event) => {
 		return;
 	}
 
+	// P2P 信令请求：网络优先，短缓存
+	if (isP2PRequest(url)) {
+		event.respondWith(
+			networkFirst(request, P2P_CACHE).catch(() => {
+				return new Response(
+					JSON.stringify({ code: -1, message: 'P2P 服务不可用', data: null }),
+					{ headers: { 'Content-Type': 'application/json' }, status: 503 }
+				);
+			})
+		);
+		return;
+	}
+
+	// Push 相关请求：仅网络
+	if (isPushRequest(url)) {
+		event.respondWith(
+			networkOnly(request).catch(() => {
+				return new Response(
+					JSON.stringify({ code: -1, message: '推送服务不可用', data: null }),
+					{ headers: { 'Content-Type': 'application/json' }, status: 503 }
+				);
+			})
+		);
+		return;
+	}
+
 	// API 请求：网络优先，失败时返回缓存
 	if (isApiRequest(url)) {
 		event.respondWith(
@@ -339,6 +381,87 @@ self.addEventListener('fetch', (event) => {
 	);
 });
 
+// ========== Push 事件监听 ==========
+
+/**
+ * 处理推送通知
+ */
+self.addEventListener('push', (event) => {
+	console.log('[SW] 收到推送通知');
+
+	let data = {
+		title: 'XVideos 影视',
+		body: '您有新的影视推荐',
+		icon: '/icons/icon-192.png',
+		badge: '/icons/icon-192.png',
+		tag: 'xvideos-notification',
+		data: {
+			url: '/'
+		}
+	};
+
+	// 解析推送数据
+	if (event.data) {
+		try {
+			const pushData = event.data.json();
+			data = { ...data, ...pushData };
+		} catch {
+			// 非 JSON 数据，使用文本
+			data.body = event.data.text() || data.body;
+		}
+	}
+
+	const options = {
+		body: data.body,
+		icon: data.icon,
+		badge: data.badge,
+		tag: data.tag,
+		data: data.data,
+		actions: data.actions || [],
+		vibrate: [100, 50, 100],
+		renotify: true
+	};
+
+	event.waitUntil(
+		self.registration.showNotification(data.title, options)
+	);
+});
+
+/**
+ * 处理通知点击
+ */
+self.addEventListener('notificationclick', (event) => {
+	console.log('[SW] 通知被点击:', event.notification.tag);
+
+	event.notification.close();
+
+	// 获取点击的目标 URL
+	const targetUrl = event.notification.data?.url || '/';
+
+	event.waitUntil(
+		self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+			.then((clientList) => {
+				// 如果已有窗口打开，聚焦到该窗口
+				for (const client of clientList) {
+					if (client.url.includes(targetUrl) && 'focus' in client) {
+						return client.focus();
+					}
+				}
+				// 否则打开新窗口
+				if (self.clients.openWindow) {
+					return self.clients.openWindow(targetUrl);
+				}
+			})
+	);
+});
+
+/**
+ * 处理通知关闭
+ */
+self.addEventListener('notificationclose', (event) => {
+	console.log('[SW] 通知被关闭:', event.notification.tag);
+});
+
 // ========== 消息处理 ==========
 
 self.addEventListener('message', (event) => {
@@ -372,6 +495,34 @@ self.addEventListener('sync', (event) => {
 	if (event.tag === 'check-api-domain') {
 		event.waitUntil(findActiveDomain());
 	}
+
+	// P2P 数据后台同步
+	if (event.tag === 'p2p-sync') {
+		event.waitUntil(
+			caches.open(P2P_CACHE).then((cache) => {
+				// 清理过期的 P2P 缓存数据
+				return cache.keys().then((requests) => {
+					return Promise.all(
+						requests.map((request) => {
+							return cache.match(request).then((response) => {
+								if (response) {
+									const date = response.headers.get('date');
+									if (date) {
+										const cacheTime = new Date(date).getTime();
+										const now = Date.now();
+										// P2P 缓存有效期 1 小时
+										if (now - cacheTime > 3600000) {
+											return cache.delete(request);
+										}
+									}
+								}
+							});
+						})
+					);
+				});
+			})
+		);
+	}
 });
 
 // ========== 定期探活 ==========
@@ -381,4 +532,4 @@ setInterval(() => {
 	findActiveDomain();
 }, 5 * 60 * 1000);
 
-console.log('[SW] Service Worker 已加载');
+console.log('[SW] Service Worker 已加载 (v3 - P2P + Push 增强)');
