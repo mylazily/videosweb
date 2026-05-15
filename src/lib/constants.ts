@@ -255,3 +255,116 @@ export const PRERENDER_TAG_SLUGS = [
 	'action', 'comedy', 'romance', 'scifi',
 	'horror', 'war', 'anime', 'variety'
 ];
+
+// ========== TG Mini App 相关常量 ==========
+
+/** TG Mini App Bot Token（后端验证用） */
+export const TG_BOT_TOKEN = '';
+
+/** TG Mini App 深度链接 */
+export const TG_DEEP_LINK = 'https://t.me/xvideos_bot/app';
+
+/** TG 主题色（Mini App 内使用） */
+export const TG_THEME = {
+	BG_COLOR: '#1a1a2e',
+	TEXT_COLOR: '#ffffff',
+	BUTTON_COLOR: '#FB7299',
+	BUTTON_TEXT_COLOR: '#ffffff',
+	SECONDARY_BG_COLOR: '#16213e'
+};
+
+/** TG Mini App 最大初始化等待时间（毫秒） */
+export const TG_INIT_TIMEOUT = 3000;
+
+// ========== 支付相关常量 ==========
+
+/** 支付轮询间隔（毫秒） */
+export const PAYMENT_POLL_INTERVAL = 2000;
+
+/** 支付订单过期时间（秒） */
+export const PAYMENT_ORDER_EXPIRE = 1800;
+
+/** VIP 套餐列表 */
+export const VIP_PLANS = [
+	{
+		id: 'vip_month',
+		name: '月度会员',
+		level: 1,
+		duration_days: 30,
+		price: 9.99,
+		original_price: 19.99,
+		currency: 'USDT',
+		description: '解锁全部高清内容',
+		features: ['高清1080P', '无广告', '专属弹幕样式', '优先客服'],
+		is_recommended: false
+	},
+	{
+		id: 'vip_year',
+		name: '年度会员',
+		level: 2,
+		duration_days: 365,
+		price: 79.99,
+		original_price: 119.99,
+		currency: 'USDT',
+		description: '尊享年度会员权益',
+		features: ['超清4K', '无广告', '专属弹幕样式', '优先客服', '离线缓存', '多设备同时在线'],
+		is_recommended: true
+	}
+];
+
+/** 支持的支付渠道类型 */
+export const PAYMENT_CHANNEL_TYPES = ['crypto', 'alipay', 'wechat'] as const;
+
+// ========== 广告奖励相关常量 ==========
+
+/** 广告观看时长（秒） */
+export const AD_WATCH_DURATION = 30;
+
+/** 每日签到奖励金币 */
+export const CHECKIN_REWARD = 10;
+
+/** 每日看广告奖励金币 */
+export const AD_REWARD = 20;
+
+/** 每日分享奖励金币 */
+export const SHARE_REWARD = 15;
+
+/** 每日邀请奖励金币 */
+export const INVITE_REWARD = 50;
+
+/** 每日最大广告观看次数 */
+export const MAX_DAILY_AD_WATCH = 10;
+
+/** 每日最大分享次数 */
+export const MAX_DAILY_SHARE = 5;
+
+// ========== WebSocket 弹幕相关常量 ==========
+
+/** 弹幕 WebSocket 地址 */
+export const DANMAKU_WS_URL = 'wss://xvideos.com/ws/danmaku';
+
+/** WebSocket 心跳间隔（毫秒） */
+export const WS_HEARTBEAT_INTERVAL = 30000;
+
+/** WebSocket 重连间隔（毫秒） */
+export const WS_RECONNECT_INTERVAL = 3000;
+
+/** WebSocket 最大重连次数 */
+export const WS_MAX_RECONNECT_ATTEMPTS = 5;
+
+/** VIP 弹幕颜色 */
+export const VIP_DANMAKU_COLORS = {
+	1: '#FFD700', // VIP1 金色
+	2: 'linear-gradient(90deg, #FF0000, #FF7F00, #FFFF00, #00FF00, #0000FF, #8B00FF)' // VIP2 彩虹
+};
+
+// ========== 域名轮询相关常量 ==========
+
+/** 域名健康检查间隔（毫秒） */
+export const DOMAIN_HEALTH_CHECK_INTERVAL = 60000;
+
+/** 域名切换最大超时（毫秒） */
+export const DOMAIN_SWITCH_TIMEOUT = 100;
+
+/** 域名轮询 API 路径 */
+export const DOMAIN_ROTATION_PATH = '/api/v1/domain/rotation';

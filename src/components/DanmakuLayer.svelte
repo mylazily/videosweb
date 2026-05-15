@@ -3,10 +3,13 @@
 	 * 弹幕层组件
 	 * Canvas 渲染弹幕，支持滚动弹幕、顶部固定弹幕、弹幕发送
 	 * 优化：使用对象池、批量渲染、RAF 节流、内存管理
+	 * 增强：集成 WebSocket 实时弹幕、VIP 弹幕特殊样式、在线人数显示
 	 */
 	import { onMount, onDestroy } from 'svelte';
 	import type { Danmaku } from '$lib/types';
-	import { PLAYER_CONFIG } from '$lib/constants';
+	import { PLAYER_CONFIG, VIP_DANMAKU_COLORS } from '$lib/constants';
+	import { getDanmakuWS, destroyDanmakuWS } from '$lib/danmaku/websocket';
+	import type { DanmakuWS } from '$lib/danmaku/websocket';
 
 	interface Props {
 		danmakus?: Danmaku[];
@@ -14,6 +17,7 @@
 		opacity?: number;
 		fontSize?: number;
 		onSend?: (content: string) => void;
+		videoId?: string;
 	}
 
 	let {
@@ -21,7 +25,8 @@
 		visible = true,
 		opacity = PLAYER_CONFIG.DANMAKU_OPACITY,
 		fontSize = PLAYER_CONFIG.DANMAKU_FONT_SIZE,
-		onSend
+		onSend,
+		videoId = ''
 	}: Props = $props();
 
 	// ========== Canvas 相关 ==========
@@ -66,6 +71,52 @@
 
 	// ========== 轨道管理 ==========
 	let occupiedTracks = new Set<number>();
+
+	// ========== WebSocket 实时弹幕 ==========
+
+	let danmakuWS: DanmakuWS | null = null;
+	let onlineCount = $state(0);
+	let wsConnected = $state(false);
+
+	/**
+	 * 初始化 WebSocket 弹幕连接
+	 */
+	function initDanmakuWS(): void {
+		if (!videoId) return;
+
+		danmakuWS = getDanmakuWS();
+
+		// 注册弹幕消息回调
+		danmakuWS.onMessage((danmaku: Danmaku) => {
+			// 实时弹幕直接添加到画面
+			addDanmaku(danmaku);
+		});
+
+		// 注册在线人数回调
+		danmakuWS.onOnlineCount((count: number) => {
+			onlineCount = count;
+		});
+
+		// 注册连接状态回调
+		danmakuWS.onStateChange((state) => {
+			wsConnected = state === 'connected';
+		});
+
+		// 连接 WebSocket
+		danmakuWS.connect(videoId);
+	}
+
+	/**
+	 * 断开 WebSocket 弹幕连接
+	 */
+	function disconnectDanmakuWS(): void {
+		if (danmakuWS) {
+			danmakuWS.disconnect();
+			danmakuWS = null;
+		}
+		onlineCount = 0;
+		wsConnected = false;
+	}
 
 	// ========== 初始化 ==========
 
@@ -432,6 +483,9 @@
 		initCanvas();
 		animationId = requestAnimationFrame(render);
 
+		// 初始化 WebSocket 弹幕连接
+		initDanmakuWS();
+
 		const handleResize = () => {
 			// 使用防抖
 			if (resizeTimeout) clearTimeout(resizeTimeout);
@@ -465,6 +519,9 @@
 		}
 
 		clearDanmakus();
+
+		// 断开 WebSocket 弹幕连接
+		disconnectDanmakuWS();
 	});
 </script>
 
@@ -474,6 +531,14 @@
 
 <!-- 弹幕开关和发送按钮 -->
 <div class="absolute top-2 right-2 flex gap-2" style="z-index: 20;">
+	<!-- 在线人数 -->
+	{#if wsConnected}
+		<div class="px-2 py-1 text-xs rounded bg-black/50 text-white flex items-center gap-1">
+			<div class="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></div>
+			<span>{onlineCount}</span>
+		</div>
+	{/if}
+
 	<!-- 弹幕开关 -->
 	<button
 		onclick={() => visible = !visible}

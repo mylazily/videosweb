@@ -3,6 +3,7 @@
 	 * hls.js 视频播放器组件
 	 * 支持播放/暂停、进度条、全屏、自动播放、错误重试、进度上报
 	 * 增强：多线路自动切换、播放进度上报、错误重试机制、播放器事件回调
+	 * 增强：集成 WebSocket 弹幕连接，播放时自动连接，暂停/停止时断开
 	 */
 	import { onMount, onDestroy } from 'svelte';
 	import Hls from 'hls.js';
@@ -10,12 +11,15 @@
 	import { formatDuration } from '$lib/utils';
 	import { PLAYER_CONFIG } from '$lib/constants';
 	import type { PlayerCallbacks } from '$lib/types';
+	import { getDanmakuWS } from '$lib/danmaku/websocket';
+	import type { DanmakuWS } from '$lib/danmaku/websocket';
 
 	interface Props {
 		src: string;           // m3u8 地址（可能加密）
 		poster?: string;       // 封面图
 		autoPlay?: boolean;    // 自动播放
 		sources?: string[];    // 多线路播放地址列表（用于自动切换）
+		videoId?: string;      // 视频 ID（用于弹幕 WebSocket）
 		onTimeUpdate?: (currentTime: number, duration: number) => void;
 		onEnded?: () => void;
 		onError?: (error: string) => void;
@@ -28,6 +32,7 @@
 		poster = '',
 		autoPlay = PLAYER_CONFIG.AUTO_PLAY,
 		sources = [],
+		videoId = '',
 		onTimeUpdate,
 		onEnded,
 		onError,
@@ -64,6 +69,30 @@
 	let progressTimer: ReturnType<typeof setInterval> | null = null;
 	let hideControlsTimer: ReturnType<typeof setTimeout> | null = null;
 	let isDestroyed = false;
+
+	// ========== WebSocket 弹幕连接 ==========
+
+	let danmakuWS: DanmakuWS | null = null;
+
+	/**
+	 * 连接弹幕 WebSocket
+	 */
+	function connectDanmakuWS(): void {
+		if (!videoId) return;
+
+		danmakuWS = getDanmakuWS();
+		danmakuWS.connect(videoId);
+	}
+
+	/**
+	 * 断开弹幕 WebSocket
+	 */
+	function disconnectDanmakuWS(): void {
+		if (danmakuWS) {
+			danmakuWS.disconnect();
+			danmakuWS = null;
+		}
+	}
 
 	// ========== 派生状态 ==========
 	const formattedCurrentTime = $derived(formatDuration(currentTime));
@@ -433,6 +462,9 @@
 		if (hideControlsTimer) {
 			clearTimeout(hideControlsTimer);
 		}
+
+		// 断开弹幕 WebSocket 连接
+		disconnectDanmakuWS();
 	});
 </script>
 
@@ -453,8 +485,8 @@
 		class="w-full aspect-video object-contain"
 		{poster}
 		playsinline
-		onplay={() => { isPlaying = true; startProgressReport(); onPlay?.(); }}
-		onpause={() => { isPlaying = false; onPause?.(); }}
+		onplay={() => { isPlaying = true; startProgressReport(); connectDanmakuWS(); onPlay?.(); }}
+		onpause={() => { isPlaying = false; disconnectDanmakuWS(); onPause?.(); }}
 		onwaiting={() => { isLoading = true; }}
 		oncanplay={() => { isLoading = false; }}
 		onended={() => { isPlaying = false; onEnded?.(); }}

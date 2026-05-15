@@ -387,3 +387,133 @@ export function getRedirectRules() {
 export function reportSiteVisit(data: { domain: string; path: string; ua?: string; referrer?: string }) {
 	return post('/api/v1/cluster/visit', data);
 }
+
+// ========== TG Mini App API ==========
+
+/**
+ * 发送 TG Mini App 会话数据到后端
+ */
+export function sendTGSession(session: import('./types').TGSession) {
+	return post('/api/v1/tg/session', session);
+}
+
+/**
+ * TG 用户登录/注册
+ */
+export function tgLogin(initData: string) {
+	return post<{ token: string; user: import('./types').User }>('/api/v1/tg/login', { init_data: initData });
+}
+
+/**
+ * 绑定 TG 账号
+ */
+export function bindTGAccount(tgUserId: number) {
+	return post('/api/v1/tg/bind', { tg_user_id: tgUserId });
+}
+
+// ========== 支付 API ==========
+
+/**
+ * 获取支付渠道列表
+ */
+export function getPaymentChannels() {
+	return get<{ channels: import('./types').PaymentChannel[] }>('/api/v1/payment/channels');
+}
+
+/**
+ * 创建支付订单
+ */
+export function createPaymentOrder(data: {
+	channel_id: string;
+	plan_id?: string;
+	amount?: number;
+	video_id?: string;
+}) {
+	return post<{ order: import('./types').PaymentOrder }>('/api/v1/payment/create', data);
+}
+
+/**
+ * 查询支付订单状态
+ */
+export function getPaymentOrderStatus(orderNo: string) {
+	return get<{ order: import('./types').PaymentOrder }>(`/api/v1/payment/status?order_no=${encodeURIComponent(orderNo)}`);
+}
+
+/**
+ * 获取 VIP 套餐列表
+ */
+export function getVIPPlans() {
+	return get<{ plans: import('./types').VIPPlan[] }>('/api/v1/payment/vip/plans');
+}
+
+/**
+ * 获取当前 VIP 订阅信息
+ */
+export function getVIPSubscription() {
+	return get<{ subscription: import('./types').VIPSubscription | null }>('/api/v1/payment/vip/subscription');
+}
+
+// ========== 广告奖励 API ==========
+
+/**
+ * 获取每日任务列表
+ */
+export function getDailyTasks() {
+	return get<{ tasks: import('./types').AdTask[] }>('/api/v1/reward/tasks');
+}
+
+/**
+ * 签到
+ */
+export function dailyCheckin() {
+	return post<{ reward: number; total_days: number }>('/api/v1/reward/checkin');
+}
+
+/**
+ * 上报广告观看完成
+ */
+export function reportAdWatch(adId: string) {
+	return post<{ reward: number }>('/api/v1/reward/ad/watch', { ad_id: adId });
+}
+
+/**
+ * 获取金币流水
+ */
+export function getCoinTransactions(params?: { page?: number; page_size?: number; type?: string }) {
+	const query = new URLSearchParams();
+	if (params?.page) query.set('page', String(params.page));
+	if (params?.page_size) query.set('page_size', String(params.page_size));
+	if (params?.type) query.set('type', params.type);
+	const qs = query.toString();
+	return get<{ transactions: import('./types').CoinTransaction[]; total: number }>(`/api/v1/reward/transactions${qs ? `?${qs}` : ''}`);
+}
+
+/**
+ * 获取每日任务完成情况
+ */
+export function getDailyTaskCompletion() {
+	return get<{ completion: import('./types').DailyTaskCompletion }>('/api/v1/reward/daily/completion');
+}
+
+/**
+ * 金币解锁视频
+ */
+export function coinUnlockVideo(videoId: string) {
+	return post<{ success: boolean; balance_after: number }>('/api/v1/reward/unlock', { video_id: videoId });
+}
+
+// ========== 域名轮询 API ==========
+
+/**
+ * 获取域名可用性列表
+ */
+export function getDomainAvailability() {
+	return get<{ domains: import('./types').DomainAvailability[] }>('/api/v1/domain/availability');
+}
+
+/**
+ * 上报域名切换事件
+ */
+export function reportDomainSwitch(event: import('./types').DomainSwitchEvent) {
+	return post('/api/v1/domain/switch', event);
+}

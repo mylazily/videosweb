@@ -677,3 +677,190 @@ export interface UADetectionResult {
 	};
 	raw_ua: string;
 }
+
+// ========== TG Mini App 相关 ==========
+
+/** TG 用户信息 */
+export interface TGUser {
+	id: number;
+	first_name: string;
+	last_name?: string;
+	username?: string;
+	language_code?: string;
+	photo_url?: string;
+	is_bot?: boolean;
+}
+
+/** TG Mini App 会话数据 */
+export interface TGSession {
+	user: TGUser;
+	init_data: string;
+	start_param?: string;
+	auth_date: number;
+	hash: string;
+	platform?: string;
+	theme_params?: TGThemeParams;
+}
+
+/** TG 主题参数 */
+export interface TGThemeParams {
+	bg_color?: string;
+	text_color?: string;
+	hint_color?: string;
+	link_color?: string;
+	button_color?: string;
+	button_text_color?: string;
+	secondary_bg_color?: string;
+}
+
+/** TG 频道信息 */
+export interface TGChannel {
+	id: string;
+	title: string;
+	username?: string;
+	member_count: number;
+	is_verified: boolean;
+}
+
+// ========== 支付相关 ==========
+
+/** 支付渠道 */
+export interface PaymentChannel {
+	id: string;
+	name: string;
+	icon: string;
+	type: 'crypto' | 'alipay' | 'wechat';
+	min_amount: number;
+	max_amount: number;
+	is_active: boolean;
+	sort_order: number;
+}
+
+/** 支付订单 */
+export interface PaymentOrder {
+	id: string;
+	order_no: string;
+	amount: number;
+	currency: string;
+	channel_id: string;
+	channel_name: string;
+	status: 'pending' | 'paid' | 'expired' | 'failed' | 'refunded';
+	pay_url?: string;
+	qrcode_url?: string;
+	expire_time: string;
+	create_time: string;
+	paid_time?: string;
+}
+
+/** VIP 订阅 */
+export interface VIPSubscription {
+	id: string;
+	user_id: string;
+	plan_id: string;
+	plan_name: string;
+	level: number;
+	start_time: string;
+	expire_time: string;
+	is_active: boolean;
+	auto_renew: boolean;
+	price: number;
+	currency: string;
+}
+
+/** VIP 套餐 */
+export interface VIPPlan {
+	id: string;
+	name: string;
+	level: number;
+	duration_days: number;
+	price: number;
+	original_price: number;
+	currency: string;
+	description: string;
+	features: string[];
+	is_recommended: boolean;
+}
+
+// ========== 广告奖励相关 ==========
+
+/** 广告任务 */
+export interface AdTask {
+	id: string;
+	type: 'checkin' | 'watch_ad' | 'share' | 'invite';
+	name: string;
+	description: string;
+	reward_amount: number;
+	icon: string;
+	is_completed: boolean;
+	completed_count: number;
+	max_count: number;
+	reset_time?: string;
+}
+
+/** 金币交易记录 */
+export interface CoinTransaction {
+	id: string;
+	user_id: string;
+	type: 'earn' | 'spend' | 'freeze' | 'unfreeze';
+	amount: number;
+	balance_after: number;
+	reason: string;
+	source: string;
+	create_time: string;
+}
+
+/** 每日任务完成情况 */
+export interface DailyTaskCompletion {
+	date: string;
+	checkin: boolean;
+	watch_ad_count: number;
+	share_count: number;
+	invite_count: number;
+	total_coins_earned: number;
+}
+
+// ========== 域名轮询相关 ==========
+
+/** 域名可用性 */
+export interface DomainAvailability {
+	domain: string;
+	is_alive: boolean;
+	latency: number;
+	checked_at: string;
+	region?: string;
+}
+
+/** 域名切换事件 */
+export interface DomainSwitchEvent {
+	from_domain: string;
+	to_domain: string;
+	reason: 'health_check' | 'manual' | 'auto_failover';
+	timestamp: string;
+}
+
+// ========== WebSocket 弹幕相关 ==========
+
+/** WebSocket 弹幕消息 */
+export interface WSDanmakuMessage {
+	type: 'danmaku' | 'online_count' | 'heartbeat_ack' | 'error';
+	data: {
+		id: string;
+		video_id: string;
+		time: number;
+		content: string;
+		color: string;
+		type: DanmakuType;
+		font_size: number;
+		user_id: string;
+		username: string;
+		vip_level: number;
+	} | {
+		count: number;
+	} | {
+		message: string;
+	};
+	timestamp: string;
+}
+
+/** WebSocket 连接状态 */
+export type WSConnectionState = 'disconnected' | 'connecting' | 'connected' | 'reconnecting';
