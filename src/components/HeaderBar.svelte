@@ -22,17 +22,7 @@
 
 <header class="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100/80 safe-top">
   <div class="flex items-center h-12 px-3">
-    <!-- Logo -->
-    <a href="/" class="flex items-center gap-1.5 mr-3 press">
-      <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-[#FF6B9D] to-[#FF8FB3] flex items-center justify-center">
-        <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M8 5v14l11-7z"/>
-        </svg>
-      </div>
-      <span class="text-sm font-semibold text-gray-800 hidden sm:block">影视库</span>
-    </a>
-
-    <!-- 搜索框 -->
+    <!-- 整行搜索框 -->
     <div 
       class="flex-1 flex items-center h-9 px-3 bg-gray-100/80 rounded-full transition-all duration-200 {focused ? 'ring-2 ring-[#FF6B9D]/30 bg-gray-100' : ''}"
     >
@@ -61,10 +51,3 @@
 
 <!-- 占位 -->
 <div class="h-12"></div>
-
-<style>
-  .press:active {
-    transform: scale(0.95);
-    transition: transform 0.1s ease-out;
-  }
-</style>

@@ -1,111 +1,138 @@
 <script lang="ts">
-	/**
-	 * 观看历史页
-	 */
-	import type { WatchHistory } from '$lib/types';
-	import { formatDuration, formatDate } from '$lib/utils';
+  /**
+   * 观看历史页
+   * 统一风格
+   */
+  import { onMount } from 'svelte';
+  import HeaderBar from '$components/HeaderBar.svelte';
+  import NavBar from '$components/NavBar.svelte';
 
-	let { data } = $props();
+  interface WatchHistory {
+    id: string;
+    video_id: string;
+    video_title: string;
+    video_cover: string;
+    episode_name?: string;
+    progress: number;
+    duration: number;
+    watch_time: string;
+  }
 
-	let history = $state<WatchHistory[]>(data.history || []);
-	let loading = $state(false);
+  let history = $state<WatchHistory[]>([]);
+  let loading = $state(true);
 
-	// 删除单条记录
-	async function handleDelete(id: string, event: Event) {
-		event.preventDefault();
-		event.stopPropagation();
-		history = history.filter((h) => h.id !== id);
-	}
+  function formatDuration(seconds: number): string {
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  }
 
-	// 清空全部
-	async function handleClearAll() {
-		if (confirm('确定要清空所有观看记录吗？')) {
-			loading = true;
-			await new Promise((resolve) => setTimeout(resolve, 500));
-			history = [];
-			loading = false;
-		}
-	}
+  function formatDate(dateStr: string): string {
+    const d = new Date(dateStr);
+    return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}`;
+  }
 
-	// 进度百分比
-	function getProgressPercent(progress: number, duration: number): number {
-		if (duration <= 0) return 0;
-		return Math.min((progress / duration) * 100, 100);
-	}
+  function getProgressPercent(progress: number, duration: number): number {
+    if (duration <= 0) return 0;
+    return Math.min((progress / duration) * 100, 100);
+  }
+
+  async function handleDelete(id: string, event: Event) {
+    event.preventDefault();
+    event.stopPropagation();
+    history = history.filter((h) => h.id !== id);
+  }
+
+  async function handleClearAll() {
+    if (confirm('确定要清空所有观看记录吗？')) {
+      history = [];
+    }
+  }
+
+  onMount(async () => {
+    try {
+      const { getBaseUrl } = await import('$lib/apiConfig');
+      const base = getBaseUrl();
+      const res = await fetch(`${base}/api/v1/user/history`, { signal: AbortSignal.timeout(3000) });
+      if (res.ok) {
+        const data = await res.json();
+        history = data.data?.list || data.data || [];
+      }
+    } catch {
+      // 未登录或加载失败
+    } finally {
+      loading = false;
+    }
+  });
 </script>
 
-<div class="px-4 py-3 safe-bottom">
-	<!-- 标题栏 -->
-	<div class="flex items-center justify-between mb-4">
-		<h2 class="text-base font-bold text-gray-900 dark:text-dark-text">
-			观看历史
-		</h2>
-		{#if history.length > 0}
-			<button
-				onclick={handleClearAll}
-				class="text-xs text-gray-400 btn-press"
-			>
-				清空
-			</button>
-		{/if}
-	</div>
+<svelte:head>
+  <title>观看历史 - 影视库</title>
+</svelte:head>
 
-	{#if history.length === 0}
-		<!-- 空状态 -->
-		<div class="flex flex-col items-center py-20 text-gray-400">
-			<svg class="w-16 h-16 mb-3 opacity-30" viewBox="0 0 24 24" fill="currentColor">
-				<path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/>
-			</svg>
-			<p class="text-sm">暂无观看记录</p>
-			<a href="/" class="mt-3 text-xs text-bilibili">去看看有什么好片子</a>
-		</div>
-	{:else}
-		<!-- 历史列表 -->
-		<div class="space-y-3">
-			{#each history as item (item.id)}
-				<a href="/v/{item.video_id}" class="flex gap-3 p-2 rounded-lg bg-white dark:bg-dark-card card">
-					<!-- 封面 -->
-					<div class="cover-16-9 w-[130px] flex-shrink-0 rounded">
-						<img
-							src={item.video_cover}
-							alt={item.video_title}
-							loading="lazy"
-							referrerpolicy="no-referrer"
-							class="rounded"
-						/>
-						<!-- 进度条 -->
-						<div class="absolute bottom-0 left-0 right-0 h-0.5 bg-black/30">
-							<div
-								class="h-full bg-bilibili"
-								style="width: {getProgressPercent(item.progress, item.duration)}%"
-							></div>
-						</div>
-						<!-- 时长 -->
-						<span class="absolute bottom-1 right-1 px-1 py-0.5 text-[10px] text-white bg-black/60 rounded">
-							{formatDuration(item.progress)} / {formatDuration(item.duration)}
-						</span>
-					</div>
+<div class="min-h-screen bg-[#FAFAFA]">
+  <HeaderBar />
 
-					<!-- 信息 -->
-					<div class="flex-1 flex flex-col justify-between py-0.5 min-w-0">
-						<div>
-							<h3 class="text-sm font-medium line-clamp-2 text-gray-900 dark:text-dark-text">
-								{item.video_title}
-							</h3>
-							<p class="text-xs text-gray-400 mt-1">{item.episode_name}</p>
-						</div>
-						<div class="flex items-center justify-between">
-							<span class="text-[10px] text-gray-400">{formatDate(item.watch_time)}</span>
-							<button
-								onclick={(e) => handleDelete(item.id, e)}
-								class="text-xs text-gray-400 btn-press"
-							>
-								删除
-							</button>
-						</div>
-					</div>
-				</a>
-			{/each}
-		</div>
-	{/if}
+  <main class="px-3 pt-3 pb-20">
+    <div class="flex items-center justify-between mb-3">
+      <h1 class="text-base font-bold text-gray-800">观看历史</h1>
+      {#if history.length > 0}
+        <button onclick={handleClearAll} class="text-xs text-gray-400">清空</button>
+      {/if}
+    </div>
+
+    {#if loading}
+      <div class="space-y-3">
+        {#each Array(5) as _}
+          <div class="bg-white rounded-xl p-3 flex gap-3">
+            <div class="w-32 h-20 bg-gray-100 rounded-lg"></div>
+            <div class="flex-1 space-y-2">
+              <div class="h-4 bg-gray-100 rounded"></div>
+              <div class="h-3 w-2/3 bg-gray-100 rounded"></div>
+            </div>
+          </div>
+        {/each}
+      </div>
+    {:else if history.length === 0}
+      <div class="flex flex-col items-center justify-center py-20">
+        <div class="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mb-3">
+          <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+        <p class="text-gray-400 text-sm">暂无观看记录</p>
+        <a href="/" class="mt-3 text-xs text-[#FF6B9D]">去看看有什么好片子</a>
+      </div>
+    {:else}
+      <div class="space-y-3">
+        {#each history as item (item.id)}
+          <a href="/v/{item.video_id}" class="bg-white rounded-xl p-3 flex gap-3 active:scale-[0.98] transition-transform">
+            <div class="relative w-32 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+              <img src={item.video_cover} alt={item.video_title} loading="lazy" referrerpolicy="no-referrer" class="w-full h-full object-cover" />
+              <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-black/30">
+                <div class="h-full bg-[#FF6B9D]" style="width: {getProgressPercent(item.progress, item.duration)}%"></div>
+              </div>
+              <span class="absolute bottom-1 right-1 px-1 py-0.5 text-[9px] text-white bg-black/60 rounded">
+                {formatDuration(item.progress)}/{formatDuration(item.duration)}
+              </span>
+            </div>
+            <div class="flex-1 flex flex-col justify-between py-0.5 min-w-0">
+              <div>
+                <h3 class="text-sm font-medium text-gray-800 line-clamp-2">{item.video_title}</h3>
+                {#if item.episode_name}
+                  <p class="text-xs text-gray-400 mt-0.5">{item.episode_name}</p>
+                {/if}
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-[10px] text-gray-400">{formatDate(item.watch_time)}</span>
+                <button onclick={(e) => handleDelete(item.id, e)} class="text-xs text-gray-400">删除</button>
+              </div>
+            </div>
+          </a>
+        {/each}
+      </div>
+    {/if}
+  </main>
+
+  <NavBar />
 </div>
