@@ -1,8 +1,8 @@
 # 大周转架构 - 12小时冰封缓存 + 图片永久缓存
 
-# HTML 页面：12小时死缓存 + 24小时后台静默更新
+# HTML 页面：严格12小时缓存，过期后立即回源更新
 /*.html
-  Cache-Control: public, max-age=43200, stale-while-revalidate=86400
+  Cache-Control: public, max-age=43200
 
 # API 代理请求：不缓存（由 Go 后端处理）
 /api/*
@@ -11,7 +11,7 @@
 
 # sitemap.xml：12小时缓存
 /sitemap*.xml
-  Cache-Control: public, max-age=43200, stale-while-revalidate=86400
+  Cache-Control: public, max-age=43200
 
 /robots.txt
   Cache-Control: public, max-age=86400
