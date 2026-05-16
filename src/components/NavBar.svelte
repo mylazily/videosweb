@@ -6,7 +6,7 @@
     { path: '/short', label: '短视频' },
     { path: '/discover', label: '发现' },
     { path: '/category', label: '分类' },
-    { path: '/profile', label: '我的' },
+    { path: '/profile', label: '我' },
   ];
 
   const current = $derived(page.url.pathname);
