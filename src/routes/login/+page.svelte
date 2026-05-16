@@ -1,12 +1,12 @@
 <script lang="ts">
 	/**
 	 * 登录页
+	 * 使用真实 API 调用替换模拟数据
 	 */
 	import { goto } from '$app/navigation';
-	import { post } from '$lib/api';
 	import { setToken, setRefreshToken, setUserInfo } from '$lib/auth';
-	import { API_PATHS } from '$lib/constants';
-	import type { LoginResponse } from '$lib/types';
+	import { getBaseUrl } from '$lib/apiConfig';
+	import type { User } from '$lib/types';
 
 	let username = $state('');
 	let password = $state('');
@@ -28,25 +28,25 @@
 		error = '';
 
 		try {
-			// 模拟登录（实际项目中调用 API）
-			await new Promise((resolve) => setTimeout(resolve, 1000));
+			const base = getBaseUrl();
+			const response = await fetch(`${base}/api/v1/auth/login`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ username, password })
+			});
 
-			// 模拟成功响应
-			const mockResponse: LoginResponse = {
-				token: 'mock_jwt_token_' + Date.now(),
-				user: {
-					id: 'user_001',
-					username: username,
-					avatar: 'https://picsum.photos/seed/user/200/200',
-					email: '',
-					vip_level: 0,
-					create_time: new Date().toISOString()
-				}
-			};
+			const data = await response.json();
 
-			// 保存登录信息
-			setToken(mockResponse.token);
-			setUserInfo(mockResponse.user);
+			if (!response.ok || data.code !== 0) {
+				throw new Error(data.message || '登录失败');
+			}
+
+			// 保存 token
+			setToken(data.data.token);
+			if (data.data.refresh_token) {
+				setRefreshToken(data.data.refresh_token);
+			}
+			setUserInfo(data.data.user);
 
 			// 跳转到首页
 			goto('/');

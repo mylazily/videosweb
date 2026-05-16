@@ -2,8 +2,10 @@
 	/**
 	 * 搜索页
 	 * 搜索框 + 热搜词 + 搜索结果列表
+	 * 使用真实 API 调用替换模拟数据
 	 */
 	import type { HotWord, Video } from '$lib/types';
+	import { getBaseUrl } from '$lib/apiConfig';
 	import SearchBar from '$components/SearchBar.svelte';
 	import VideoCard from '$components/VideoCard.svelte';
 	import LoadingSpinner from '$components/LoadingSpinner.svelte';
@@ -16,6 +18,7 @@
 	let isSearching = $state(false);
 	let hasSearched = $state(false);
 	let loading = $state(false);
+	let error = $state('');
 
 	// 执行搜索
 	async function handleSearch(kw: string) {
@@ -24,30 +27,22 @@
 		isSearching = true;
 		hasSearched = true;
 		loading = true;
+		error = '';
 
-		// 模拟搜索 API 调用
-		await new Promise((resolve) => setTimeout(resolve, 800));
+		try {
+			const base = getBaseUrl();
+			const response = await fetch(`${base}/api/v1/search?q=${encodeURIComponent(keyword)}&page=1&page_size=20`);
 
-		// 模拟搜索结果
-		searchResults = Array.from({ length: 6 }, (_, i) => ({
-			id: `search_${i}`,
-			title: `${keyword} - 搜索结果 ${i + 1}`,
-			cover: `https://picsum.photos/seed/search${i}/400/225`,
-			description: `关于"${keyword}"的影视内容`,
-			director: '导演' + (i + 1),
-			actors: ['演员A', '演员B'],
-			year: 2024,
-			area: '中国',
-			category: '电影',
-			tags: ['热门'],
-			rating: 4 + Math.random() * 6,
-			play_count: Math.floor(Math.random() * 1000000),
-			comment_count: Math.floor(Math.random() * 10000),
-			update_time: '2024-12-01',
-			sources: []
-		}));
+			if (!response.ok) throw new Error('搜索失败');
 
-		loading = false;
+			const data = await response.json();
+			searchResults = data.data?.list || data.data || [];
+		} catch {
+			error = '搜索失败，请稍后重试';
+			searchResults = [];
+		} finally {
+			loading = false;
+		}
 	}
 
 	// 点击热搜词
@@ -92,9 +87,15 @@
 		{:else}
 			<!-- 搜索结果 -->
 			<div class="px-4 py-3">
-				<p class="text-xs text-gray-400 mb-3">
-					找到 {searchResults.length} 个与"{keyword}"相关的结果
-				</p>
+				{#if error}
+					<div class="px-3 py-2 text-xs text-red-500 bg-red-50 dark:bg-red-900/20 rounded-lg mb-3">
+						{error}
+					</div>
+				{:else}
+					<p class="text-xs text-gray-400 mb-3">
+						找到 {searchResults.length} 个与"{keyword}"相关的结果
+					</p>
+				{/if}
 				<div class="grid grid-cols-2 gap-3">
 					{#each searchResults as video (video.id)}
 						<VideoCard {video} />

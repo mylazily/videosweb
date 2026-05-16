@@ -150,7 +150,7 @@
 					initP2PLoader = p2pModule.initP2PLoader.bind(p2pModule);
 				}
 			} catch (p2pErr) {
-				console.warn('[P2P播放器] p2p-media-loader-hlsjs 加载失败，将使用纯 HTTP 模式:', p2pErr);
+				// p2p-media-loader-hlsjs 加载失败，将使用纯 HTTP 模式
 				isP2PFailed = true;
 			}
 
@@ -160,7 +160,7 @@
 				p2pModule
 			};
 		} catch (err) {
-			console.error('[P2P播放器] hls.js 加载失败:', err);
+			// hls.js 加载失败
 			return null;
 		}
 	}
@@ -195,10 +195,9 @@
 				}
 			}
 
-			console.log(`[P2P播放器] P2P 引擎已创建，Swarm ID: ${swarmId}`);
 			return engine;
 		} catch (err) {
-			console.warn('[P2P播放器] P2P 引擎创建失败，降级到纯 HTTP:', err);
+			// P2P 引擎创建失败，降级到纯 HTTP
 			isP2PFailed = true;
 			return null;
 		}
@@ -334,12 +333,10 @@
 				// 进入低速模式
 				isLowSpeed = true;
 				adjustBufferConfig(P2P_CONFIG.LOW_SPEED_BUFFER_LENGTH, P2P_CONFIG.LOW_SPEED_MAX_BUFFER_LENGTH);
-				console.log('[P2P播放器] 检测到低速，降低预加载阈值');
 			} else if (totalSpeed > P2P_CONFIG.HIGH_SPEED_THRESHOLD && isLowSpeed) {
 				// 恢复正常模式
 				isLowSpeed = false;
 				adjustBufferConfig(P2P_CONFIG.MAX_BUFFER_LENGTH, P2P_CONFIG.MAX_MAX_BUFFER_LENGTH);
-				console.log('[P2P播放器] 速率恢复正常，恢复预加载');
 			}
 		}, P2P_CONFIG.BUFFER_OPTIMIZE_INTERVAL);
 	}
@@ -477,7 +474,7 @@
 					(eng.attachHls as Function)(hls);
 				}
 			} catch {
-				console.warn('[P2P播放器] P2P 引擎附加到 HLS 失败，使用纯 HTTP');
+				// P2P 引擎附加到 HLS 失败，使用纯 HTTP
 				isP2PFailed = true;
 			}
 		}
@@ -593,7 +590,6 @@
 		retryCount++;
 
 		if (retryCount <= MAX_RETRY_PER_LINE) {
-			console.log(`[P2P播放器] 重试当前线路 (${retryCount}/${MAX_RETRY_PER_LINE})`);
 			showToast(`连接不稳定，正在重试 (${retryCount}/${MAX_RETRY_PER_LINE})...`);
 			setTimeout(() => {
 				if (!isDestroyed) initPlayer(currentLineIndex);
@@ -610,7 +606,6 @@
 			retryCount = 0;
 
 			const lineName = playLines[nextLineIndex].source_name;
-			console.log(`[P2P播放器] 切换到线路 ${nextLineIndex + 1}: ${lineName}`);
 			showToast(`当前线路连接超时，已为您切换至 ${lineName}`);
 
 			onLineChange?.(nextLineIndex);
@@ -642,7 +637,6 @@
 		domainPoolIndex++;
 
 		const newUrl = `${nextDomain}${sharedPath}`;
-		console.log(`[P2P播放器] 域名池切换: ${nextDomain}`);
 		showToast('正在切换备用节点...');
 
 		playerState = 'switching';
@@ -699,7 +693,6 @@
 		if (!videoEl || lastPlayTime <= 0) return;
 		try {
 			videoEl.currentTime = lastPlayTime;
-			console.log(`[P2P播放器] 恢复播放进度: ${lastPlayTime}s`);
 		} catch {
 			// 进度恢复失败，忽略
 		}

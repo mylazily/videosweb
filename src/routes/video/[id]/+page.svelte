@@ -51,7 +51,6 @@
 	 */
 	function handleLineChange(index: number): void {
 		currentLineIndex = index;
-		console.log(`[详情页] 线路已切换至: ${playLines[index]?.source_name}`);
 	}
 
 	/**
@@ -59,7 +58,6 @@
 	 */
 	function handleSourceSwitch(index: number): void {
 		currentLineIndex = index;
-		console.log(`[详情页] 用户手动切换线路至: ${playLines[index]?.source_name}`);
 	}
 
 	/**
@@ -83,7 +81,7 @@
 	 * 播放进度上报
 	 */
 	function handleTimeUpdate(currentTime: number, duration: number) {
-		console.log(`[进度上报] ${currentTime}/${duration}`);
+		// 进度上报逻辑（可扩展）
 	}
 
 	/**

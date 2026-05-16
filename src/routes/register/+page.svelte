@@ -1,9 +1,11 @@
 <script lang="ts">
 	/**
 	 * 注册页
+	 * 使用真实 API 调用替换模拟数据
 	 */
 	import { goto } from '$app/navigation';
 	import { setToken, setUserInfo } from '$lib/auth';
+	import { getBaseUrl } from '$lib/apiConfig';
 	import type { User } from '$lib/types';
 
 	let username = $state('');
@@ -49,22 +51,24 @@
 		error = '';
 
 		try {
-			// 模拟注册
-			await new Promise((resolve) => setTimeout(resolve, 1200));
+			const base = getBaseUrl();
+			const response = await fetch(`${base}/api/v1/auth/register`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ username, email, password })
+			});
 
-			// 模拟成功
-			const mockUser: User = {
-				id: 'user_new_' + Date.now(),
-				username: username,
-				avatar: 'https://picsum.photos/seed/newuser/200/200',
-				email: email,
-				vip_level: 0,
-				create_time: new Date().toISOString()
-			};
+			const data = await response.json();
 
-			setToken('mock_jwt_token_' + Date.now());
-			setUserInfo(mockUser);
+			if (!response.ok || data.code !== 0) {
+				throw new Error(data.message || '注册失败');
+			}
 
+			// 保存 token 和用户信息
+			setToken(data.data.token);
+			setUserInfo(data.data.user);
+
+			// 跳转到首页
 			goto('/');
 		} catch (err) {
 			error = err instanceof Error ? err.message : '注册失败，请重试';

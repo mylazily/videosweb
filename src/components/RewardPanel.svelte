@@ -112,15 +112,12 @@
 		switch (task.type) {
 			case 'watch_ad':
 				// 打开广告观看页面或触发广告
-				console.log('观看广告');
 				break;
 			case 'share':
 				// 打开分享菜单
-				console.log('分享视频');
 				break;
 			case 'invite':
 				// 打开邀请页面
-				console.log('邀请好友');
 				break;
 			default:
 				break;

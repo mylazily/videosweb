@@ -329,7 +329,6 @@
 
 		if (retryCount <= MAX_RETRY_PER_LINE) {
 			// 重试当前线路（可能是临时网络波动）
-			console.log(`[播放器] 重试当前线路 (${retryCount}/${MAX_RETRY_PER_LINE})`);
 			showToast(`连接不稳定，正在重试 (${retryCount}/${MAX_RETRY_PER_LINE})...`);
 
 			// 短暂延迟后重试
@@ -351,7 +350,6 @@
 			retryCount = 0;
 
 			const lineName = playLines[nextLineIndex].source_name;
-			console.log(`[播放器] 切换到线路 ${nextLineIndex + 1}: ${lineName}`);
 			showToast(`当前线路连接超时，已为您切换至 ${lineName}`);
 
 			// 通知父组件线路已切换
@@ -398,7 +396,6 @@
 		// 构建新的 m3u8 URL
 		const newUrl = `${nextDomain}${sharedPath}`;
 
-		console.log(`[播放器] 域名池切换: ${nextDomain}`);
 		showToast(`正在切换备用节点...`);
 
 		playerState = 'switching';
@@ -453,7 +450,6 @@
 
 		try {
 			videoEl.currentTime = lastPlayTime;
-			console.log(`[播放器] 恢复播放进度: ${lastPlayTime}s`);
 		} catch {
 			// 进度恢复失败，忽略
 		}
