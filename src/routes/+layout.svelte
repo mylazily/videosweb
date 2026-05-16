@@ -3,6 +3,7 @@
 	 * 全局布局
 	 * 初始化 API 域名检测和 PWA
 	 */
+	import '../../app.css';
 	import { checkAndActiveApi } from '$lib/apiConfig';
 	import { initPWAInstall } from '$lib/pwa/install';
 	import { onMount } from 'svelte';
