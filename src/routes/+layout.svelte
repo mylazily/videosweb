@@ -5,9 +5,10 @@
 	let { children } = $props();
 
 	onMount(async () => {
-		// 延迟加载非关键模块
-		const { checkAndActiveApi } = await import('$lib/apiConfig');
-		checkAndActiveApi().catch(() => {});
+		// 延迟加载非关键模块，不阻塞首屏渲染
+		import('$lib/apiConfig').then(({ checkAndActiveApi }) => {
+			checkAndActiveApi().catch(() => {});
+		});
 	});
 </script>
 

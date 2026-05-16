@@ -1,14 +1,14 @@
 {
-	"name": "XVideos 影视",
-	"short_name": "XVideos",
-	"description": "XVideos 影视聚合系统 - 高清影视在线观看",
+	"name": "影视库 - 高清影视在线观看",
+	"short_name": "影视库",
+	"description": "高清电影、电视剧、综艺、动漫在线观看，极速加载，无广告打扰",
 	"start_url": "/",
 	"display": "standalone",
 	"orientation": "portrait",
-	"background_color": "#17181A",
-	"theme_color": "#FB7299",
+	"background_color": "#FAFAFA",
+	"theme_color": "#FF6B9D",
 	"lang": "zh-CN",
-	"categories": ["entertainment", "video"],
+	"categories": ["entertainment", "video", "movies"],
 	"icons": [
 		{
 			"src": "/icons/icon-192.png",
@@ -24,5 +24,21 @@
 		}
 	],
 	"screenshots": [],
+	"shortcuts": [
+		{
+			"name": "搜索",
+			"short_name": "搜索",
+			"description": "搜索影视内容",
+			"url": "/search",
+			"icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+		},
+		{
+			"name": "分类",
+			"short_name": "分类",
+			"description": "浏览影视分类",
+			"url": "/category",
+			"icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+		}
+	],
 	"prefer_related_applications": false
 }

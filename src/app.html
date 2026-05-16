@@ -3,15 +3,51 @@
 	<head>
 		<meta charset="utf-8" />
 		<link rel="icon" href="%sveltekit.assets%/icons/icon-192.png" />
-		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-		<meta name="description" content="影视 - 高清在线观看" />
+		<link rel="apple-touch-icon" href="%sveltekit.assets%/icons/icon-192.png" />
+		
+		<!-- 视口设置 -->
+		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes, viewport-fit=cover" />
+		
+		<!-- SEO 基础 -->
+		<meta name="description" content="影视库 - 高清电影、电视剧、综艺、动漫在线观看，极速加载，无广告打扰，支持PWA离线观看" />
+		<meta name="keywords" content="影视,电影,电视剧,综艺,动漫,在线观看,高清视频,免费影视" />
+		<meta name="author" content="影视库" />
+		<meta name="robots" content="index, follow" />
+		
+		<!-- PWA -->
 		<meta name="theme-color" content="#FF6B9D" />
 		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+		<meta name="apple-mobile-web-app-title" content="影视库" />
+		<meta name="mobile-web-app-capable" content="yes" />
+		<link rel="manifest" href="/manifest.json" />
+		
+		<!-- 性能优化 - 预连接 -->
 		<link rel="dns-prefetch" href="https://9901.555554.xyz" />
 		<link rel="preconnect" href="https://9901.555554.xyz" crossorigin />
+		
+		<!-- 性能优化 - 预加载关键资源 -->
+		<link rel="preload" href="/icons/icon-192.png" as="image" type="image/png" />
+		
+		<!-- 结构化数据 -->
+		<script type="application/ld+json">
+		{
+			"@context": "https://schema.org",
+			"@type": "WebSite",
+			"name": "影视库",
+			"description": "高清电影、电视剧、综艺、动漫在线观看",
+			"url": "https://shipinku.pages.dev",
+			"potentialAction": {
+				"@type": "SearchAction",
+				"target": "https://shipinku.pages.dev/search?q={search_term_string}",
+				"query-input": "required name=search_term_string"
+			}
+		}
+		</script>
+		
 		%sveltekit.head%
 	</head>
-	<body data-sveltekit-preload-data="hover">
+	<body data-sveltekit-preload-data="hover" class="antialiased">
 		<div style="display: contents">%sveltekit.body%</div>
 	</body>
 </html>
