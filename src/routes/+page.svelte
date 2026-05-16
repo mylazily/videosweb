@@ -192,7 +192,7 @@
 			>
 				{#snippet item(video)}
 					<div class="waterfall-item">
-						<a href="/video/{video.id}" class="block rounded-xl overflow-hidden bg-white dark:bg-dark-card shadow-sm">
+						<a href="/v/{video.id}" class="block rounded-xl overflow-hidden bg-white dark:bg-dark-card shadow-sm">
 							<!-- 封面图（瀑布流高度自适应） -->
 							<div class="relative">
 								<img

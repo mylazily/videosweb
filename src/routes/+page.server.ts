@@ -1,12 +1,25 @@
 /**
- * 首页数据加载
- * 从后端 API 获取真实数据，支持 SSR 和 CSR
+ * 首页服务端数据加载
+ *
+ * "前店后厂"架构核心：
+ * - Cloudflare 边缘节点缓存此页面 2 小时（max-age=7200）
+ * - 缓存过期后，新用户先看到旧页面，CF 后台静默更新（stale-while-revalidate=14400）
+ * - Go 后端负载接近 0，99% 请求由 CF 边缘节点消化
+ *
+ * 首页每 2-4 小时自动更新一次，满足"几小时更新即可"的需求
  */
-import type { Banner, Video, HotWord } from '$lib/types';
+import type { PageServerLoad } from './$types';
 import { getBaseUrl } from '$lib/apiConfig';
 import { API_PATHS } from '$lib/constants';
 
-export async function load({ fetch: fetchFn }) {
+export const load: PageServerLoad = async ({ fetch: fetchFn, setHeaders }) => {
+	// 告诉 Cloudflare 边缘节点缓存策略
+	// max-age=7200: 2 小时内直接返回缓存
+	// stale-while-revalidate=14400: 过期后先返回旧缓存，后台静默更新
+	setHeaders({
+		'cache-control': 'public, max-age=7200, stale-while-revalidate=14400'
+	});
+
 	const base = getBaseUrl();
 	const headers = { 'Accept': 'application/json' };
 
@@ -19,10 +32,10 @@ export async function load({ fetch: fetchFn }) {
 			fetchFn(`${base}${API_PATHS.VIDEO_LATEST}?page=1&page_size=10`, { headers })
 		]);
 
-		let banners: Banner[] = [];
-		let hotWords: HotWord[] = [];
-		let hotVideos: Video[] = [];
-		let latestVideos: Video[] = [];
+		let banners: any[] = [];
+		let hotWords: any[] = [];
+		let hotVideos: any[] = [];
+		let latestVideos: any[] = [];
 
 		if (bannerRes.status === 'fulfilled' && bannerRes.value.ok) {
 			const data = await bannerRes.value.json();
@@ -48,7 +61,8 @@ export async function load({ fetch: fetchFn }) {
 			latestVideos
 		};
 	} catch {
-		// API 不可用时返回空数据（让前端显示空状态）
+		// Go 后端不可用时返回空数据
+		// Cloudflare 会缓存这个空页面，但 2 小时后会自动重试
 		return {
 			banners: [],
 			hotWords: [],
@@ -56,4 +70,4 @@ export async function load({ fetch: fetchFn }) {
 			latestVideos: []
 		};
 	}
-}
+};

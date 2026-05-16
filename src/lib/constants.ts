@@ -369,6 +369,9 @@ export const DOMAIN_SWITCH_TIMEOUT = 100;
 /** 域名轮询 API 路径 */
 export const DOMAIN_ROTATION_PATH = '/api/v1/domain/rotation';
 
+/** 域名健康检查 API（返回最健康的 3 个域名） */
+export const DOMAIN_HEALTHY_PATH = '/api/v1/domains/healthy';
+
 // ========== P2P HLS 播放器配置 ==========
 
 export const P2P_CONFIG = {

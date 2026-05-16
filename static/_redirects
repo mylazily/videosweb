@@ -1,0 +1,5 @@
+# 旧路由 /video/[id] 重定向到短路由 /v/[id]
+/video/:id  /v/:id  301
+
+# SPA fallback（所有未匹配路由返回 index.html）
+/*  /index.html  200

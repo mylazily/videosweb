@@ -1,0 +1,53 @@
+# HTML 页面：Cloudflare 边缘缓存 2 小时，过期后后台静默更新
+/*.html
+  Cache-Control: public, max-age=7200, stale-while-revalidate=14400
+
+# API 代理请求：不缓存（由 Go 后端处理）
+/api/*
+  Cache-Control: no-store, no-cache, must-revalidate
+  Access-Control-Allow-Origin: *
+
+# sitemap.xml：缓存 4 小时
+/sitemap*.xml
+  Cache-Control: public, max-age=14400, stale-while-revalidate=14400
+
+/robots.txt
+  Cache-Control: public, max-age=86400
+
+# JS/CSS 静态资源：长缓存（文件名含 hash）
+/_app/immutable/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# 其他静态资源：缓存 1 天
+/*.js
+  Cache-Control: public, max-age=86400
+/*.css
+  Cache-Control: public, max-age=86400
+
+# 图片资源：缓存 7 天，允许跨域
+/*.png
+  Cache-Control: public, max-age=604800
+  Access-Control-Allow-Origin: *
+/*.jpg
+  Cache-Control: public, max-age=604800
+  Access-Control-Allow-Origin: *
+/*.jpeg
+  Cache-Control: public, max-age=604800
+  Access-Control-Allow-Origin: *
+/*.webp
+  Cache-Control: public, max-age=604800
+  Access-Control-Allow-Origin: *
+/*.svg
+  Cache-Control: public, max-age=604800
+  Access-Control-Allow-Origin: *
+/*.ico
+  Cache-Control: public, max-age=604800
+
+# manifest.json：缓存 1 天
+/manifest.json
+  Cache-Control: public, max-age=86400
+  Content-Type: application/manifest+json
+
+# Service Worker：不缓存
+/sw.js
+  Cache-Control: no-cache, no-store, must-revalidate
