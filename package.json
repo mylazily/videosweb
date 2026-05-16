@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "hls.js": "^1.5.7",
-    "p2p-media-loader-hlsjs": "^1.0.7"
+    "p2p-media-loader-hlsjs": "^2.3.1"
   },
   "devDependencies": {
     "@sveltejs/adapter-static": "^3.0.6",

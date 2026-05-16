@@ -10,7 +10,7 @@
 	 * - Svelte 5 runes ($state, $effect, $props, $derived)
 	 * - SSR 安全（动态导入）
 	 */
-	import { onMount, onDestroy, browser } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import { decryptPlayUrl } from '$lib/crypto';
 	import { formatDuration } from '$lib/utils';
 	import { PLAYER_CONFIG, P2P_CONFIG } from '$lib/constants';
@@ -134,7 +134,7 @@
 		initP2PLoader: (p2pModule: P2PMediaLoaderModule) => unknown;
 		p2pModule: P2PMediaLoaderModule | null;
 	} | null> {
-		if (!browser) return null;
+		if (typeof window === 'undefined') return null;
 
 		try {
 			// 动态导入 hls.js
