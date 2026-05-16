@@ -1,5 +1,12 @@
 # 旧路由 /video/[id] 重定向到短路由 /v/[id]
 /video/:id  /v/:id  301
 
+# 静态资源（直接服务，不应用SPA回退）
+/_app/*  /_app/:splat  200
+/icons/*  /icons/:splat  200
+/manifest.json  /manifest.json  200
+/sw.js  /sw.js  200
+/robots.txt  /robots.txt  200
+
 # SPA fallback（所有未匹配路由返回 index.html）
 /*  /index.html  200

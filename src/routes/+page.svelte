@@ -12,6 +12,8 @@
          */
         import { onMount } from 'svelte';
         import type { Video } from '$lib/types';
+        import HeaderBar from '$components/HeaderBar.svelte';
+        import NavBar from '$components/NavBar.svelte';
         import CategoryTabs from '$components/CategoryTabs.svelte';
         import PullRefresh from '$components/PullRefresh.svelte';
         import SkeletonCard from '$components/SkeletonCard.svelte';
