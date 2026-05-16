@@ -4,8 +4,8 @@
   const navs = [
     { path: '/', label: '首页' },
     { path: '/short', label: '短视频' },
+    { path: '/discover', label: '发现' },
     { path: '/category', label: '分类' },
-    { path: '/rank', label: '排行' },
     { path: '/profile', label: '我的' },
   ];
 
