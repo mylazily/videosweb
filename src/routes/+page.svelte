@@ -2,7 +2,6 @@
   import { onMount } from 'svelte';
   import HeaderBar from '$components/HeaderBar.svelte';
   import NavBar from '$components/NavBar.svelte';
-  import CategoryTabs from '$components/CategoryTabs.svelte';
   import VideoCard from '$components/VideoCard.svelte';
 
   type Video = {
@@ -17,12 +16,10 @@
 
   let { data } = $props();
   
-  // 使用预渲染数据，如果没有则客户端加载
   let videos = $state<Video[]>(data.videos || []);
   let loading = $state(!data.loaded);
 
   onMount(async () => {
-    // 如果预渲染没有数据，客户端动态加载
     if (!data.loaded) {
       const { getBaseUrl } = await import('$lib/apiConfig');
       const base = getBaseUrl();
@@ -43,7 +40,6 @@
 
 <div class="min-h-screen bg-[#FAFAFA]">
   <HeaderBar />
-  <CategoryTabs />
 
   <main class="px-3 pt-3 pb-20">
     {#if loading}
