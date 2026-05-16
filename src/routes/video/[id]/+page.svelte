@@ -4,7 +4,7 @@
 	 * 播放器 + 弹幕 + 视频信息 + 线路切换 + 选集 + 评论
 	 * 增强：智能容灾播放器、多线路切换、进度同步
 	 */
-	import type { Video, Comment, Danmaku, PlayLine } from '$lib/types';
+	import type { Video, Comment, Danmaku, PlayLine, Episode } from '$lib/types';
 	import { formatPlayCount, formatRating, setPageTitle } from '$lib/utils';
 	import VideoPlayer from '$components/VideoPlayer.svelte';
 	import P2PVideoPlayer from '$components/P2PVideoPlayer.svelte';
@@ -16,22 +16,22 @@
 
 	let { data } = $props();
 
-	// 视频数据
-	let video = $state<Video>(data.video);
-	let comments = $state<Comment[]>(data.comments);
-	let danmakus = $state<Danmaku[]>(data.danmakus);
+	// 视频数据（处理null情况）
+	let video = $state<Video | null>(data.video);
+	let comments = $state<Comment[]>(data.comments || []);
+	let danmakus = $state<Danmaku[]>(data.danmakus || []);
 
 	// 播放线路数据
 	let playLines = $state<PlayLine[]>(data.playLines || []);
 	let domainPool = $state<string[]>(data.domainPool || []);
 	let sharedPath = $state<string>(data.sharedPath || '');
-	let videoId = $state<string>(video.id);
+	let videoId = $state<string>(video?.id || '');
 
 	// 播放状态
 	let currentLineIndex = $state(0);
-	let currentSourceId = $state(video.sources[0]?.source_id || '');
-	let currentEpisodeId = $state(video.sources[0]?.episodes[0]?.episode_id || '');
-	let currentEpisodes = $state<Episode[]>(video.sources[0]?.episodes || []);
+	let currentSourceId = $state(video?.sources?.[0]?.source_id || '');
+	let currentEpisodeId = $state(video?.sources?.[0]?.episodes?.[0]?.episode_id || '');
+	let currentEpisodes = $state<Episode[]>(video?.sources?.[0]?.episodes || []);
 
 	// UI 状态
 	let activeTab = $state<'episodes' | 'comments'>('episodes');
@@ -43,7 +43,9 @@
 
 	// 设置页面标题
 	$effect(() => {
-		setPageTitle(video.title);
+		if (video) {
+			setPageTitle(video.title);
+		}
 	});
 
 	/**
@@ -144,57 +146,66 @@
 </script>
 
 <div class="pb-16">
-	<!-- 视频播放器 + 弹幕层 -->
-	<div class="relative">
-		<P2PVideoPlayer
-			{playLines}
-			{domainPool}
-			{sharedPath}
-			{videoId}
-			onLineChange={handleLineChange}
-			onTimeUpdate={(time: number) => handleTimeUpdate(time, 0)}
-		/>
-		<DanmakuLayer
-			danmakus={danmakus}
-			onSend={handleSendDanmaku}
-		/>
-	</div>
+	<!-- 视频不存在时的错误提示 -->
+	{#if !video}
+		<div class="flex flex-col items-center justify-center min-h-[60vh] px-4">
+			<div class="text-6xl mb-4">&#128533;</div>
+			<h2 class="text-lg font-bold text-gray-900 dark:text-dark-text mb-2">视频不存在</h2>
+			<p class="text-sm text-gray-500 dark:text-dark-text-secondary mb-4">该视频可能已被删除或链接无效</p>
+			<a href="/" class="px-4 py-2 bg-bilibili text-white rounded-lg text-sm">返回首页</a>
+		</div>
+	{:else}
+		<!-- 视频播放器 + 弹幕层 -->
+		<div class="relative">
+			<P2PVideoPlayer
+				{playLines}
+				{domainPool}
+				{sharedPath}
+				{videoId}
+				onLineChange={handleLineChange}
+				onTimeUpdate={(time: number) => handleTimeUpdate(time, 0)}
+			/>
+			<DanmakuLayer
+				danmakus={danmakus}
+				onSend={handleSendDanmaku}
+			/>
+		</div>
 
-	<!-- 当前播放线路信息栏 -->
-	{#if playLines.length > 0}
-		<div class="px-4 py-2 bg-gray-50 dark:bg-dark-card flex items-center justify-between">
-			<div class="flex items-center gap-2 text-xs text-gray-500 dark:text-dark-text-secondary">
-				<span class="inline-block w-2 h-2 rounded-full" style="background-color: #FB7299;"></span>
-				<span>当前线路: <strong class="text-gray-900 dark:text-dark-text">{playLines[currentLineIndex]?.source_name || '未知'}</strong></span>
-				{#if playLines[currentLineIndex]?.quality}
-					<span class="px-1.5 py-0.5 rounded text-[10px]" style="background-color: rgba(251, 114, 153, 0.1); color: #FB7299;">
-						{playLines[currentLineIndex].quality}
+		<!-- 当前播放线路信息栏 -->
+		{#if playLines.length > 0}
+			<div class="px-4 py-2 bg-gray-50 dark:bg-dark-card flex items-center justify-between">
+				<div class="flex items-center gap-2 text-xs text-gray-500 dark:text-dark-text-secondary">
+					<span class="inline-block w-2 h-2 rounded-full" style="background-color: #FB7299;"></span>
+					<span>当前线路: <strong class="text-gray-900 dark:text-dark-text">{playLines[currentLineIndex]?.source_name || '未知'}</strong></span>
+					{#if playLines[currentLineIndex]?.quality}
+						<span class="px-1.5 py-0.5 rounded text-[10px]" style="background-color: rgba(251, 114, 153, 0.1); color: #FB7299;">
+							{playLines[currentLineIndex].quality}
+						</span>
+					{/if}
+				</div>
+				{#if playLines.length > 1}
+					<span class="text-[10px] text-gray-400 dark:text-dark-text-secondary">
+						共 {playLines.length} 条线路
 					</span>
 				{/if}
 			</div>
-			{#if playLines.length > 1}
-				<span class="text-[10px] text-gray-400 dark:text-dark-text-secondary">
-					共 {playLines.length} 条线路
-				</span>
-			{/if}
-		</div>
-	{/if}
+		{/if}
 
-	<!-- 视频信息 -->
-	<div class="px-4 py-3 bg-white dark:bg-dark-card">
-		<h1 class="text-base font-bold text-gray-900 dark:text-dark-text leading-tight">
-			{video.title}
-		</h1>
+		<!-- 视频信息 -->
+		<div class="px-4 py-3 bg-white dark:bg-dark-card">
+			<h1 class="text-base font-bold text-gray-900 dark:text-dark-text leading-tight">
+				{video.title}
+			</h1>
 
-		<div class="flex items-center gap-3 mt-2 text-xs text-gray-500 dark:text-dark-text-secondary">
-			<span class="text-orange-500 font-medium">{formatRating(video.rating)}分</span>
-			<span>{formatPlayCount(video.play_count)}播放</span>
-			<span>{video.comment_count}评论</span>
-			<span>{video.year} / {video.area}</span>
-		</div>
+			<div class="flex items-center gap-3 mt-2 text-xs text-gray-500 dark:text-dark-text-secondary">
+				<span class="text-orange-500 font-medium">{formatRating(video.rating)}分</span>
+				<span>{formatPlayCount(video.play_count)}播放</span>
+				<span>{video.comment_count}评论</span>
+				<span>{video.year} / {video.area}</span>
+			</div>
 
-		<!-- 标签 -->
-		<div class="flex gap-1.5 mt-2 flex-wrap">
+			<!-- 标签 -->
+			<div class="flex gap-1.5 mt-2 flex-wrap">
 			{#each video.tags as tag}
 				<span class="tag">{tag}</span>
 			{/each}
@@ -283,15 +294,17 @@
 				/>
 			</div>
 		{/if}
-	</div>
+	{/if}
 </div>
 
 <!-- 底部评论输入框（固定） -->
-<div class="fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-dark-card border-t border-gray-200 dark:border-dark-border"
-     style="padding-bottom: env(safe-area-inset-bottom, 0px);">
-	<CommentInput
-		onSubmit={handleSubmitComment}
-		loading={commentLoading}
-		replyTo={replyTo?.username || ''}
-	/>
-</div>
+{#if video}
+	<div class="fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-dark-card border-t border-gray-200 dark:border-dark-border"
+	     style="padding-bottom: env(safe-area-inset-bottom, 0px);">
+		<CommentInput
+			onSubmit={handleSubmitComment}
+			loading={commentLoading}
+			replyTo={replyTo?.username || ''}
+		/>
+	</div>
+{/if}

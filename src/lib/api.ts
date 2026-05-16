@@ -34,7 +34,8 @@ function requestInterceptor(url: string, options: RequestInit): { url: string; o
 	}
 
 	// 设置默认 Content-Type
-	if (!options.headers?.['Content-Type'] && !(options.body instanceof FormData)) {
+	const headers = options.headers as Record<string, string> | undefined;
+	if (!headers?.['Content-Type'] && !(options.body instanceof FormData)) {
 		options.headers = {
 			...options.headers,
 			'Content-Type': 'application/json'

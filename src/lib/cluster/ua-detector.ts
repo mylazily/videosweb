@@ -190,7 +190,7 @@ function getDeviceInfo(): UADetectionResult['device'] {
 	return {
 		screen_width: screenWidth,
 		screen_height: screenHeight,
-		pixel_ratio
+		pixel_ratio: pixelRatio
 	};
 }
 

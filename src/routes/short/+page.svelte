@@ -44,19 +44,23 @@
 		loading = true;
 
 		try {
+			const { getBaseUrl } = await import('$lib/apiConfig');
+			const base = getBaseUrl();
 			const params = new URLSearchParams({
 				sort: activeSort === 'random2' ? 'random' : activeSort,
-				page: String(pageNum)
+				page: String(pageNum),
+				page_size: '10'
 			});
-			const res = await fetch(`/short?${params}`);
+			const res = await fetch(`${base}/api/v1/shorts?${params}`);
 			const data = await res.json();
 
+			const newShorts = data.data?.list || data.data || [];
 			if (reset) {
-				shorts = data.shorts || [];
+				shorts = newShorts;
 			} else {
-				shorts = [...shorts, ...(data.shorts || [])];
+				shorts = [...shorts, ...newShorts];
 			}
-			hasMore = data.hasMore;
+			hasMore = newShorts.length >= 10;
 		} catch {
 			// 加载失败静默处理
 		} finally {

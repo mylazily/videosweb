@@ -89,11 +89,11 @@
 
 		// 上滑切换下一个
 		if (touchDeltaY < -80) {
-			console.log('切换到下一个短视频');
+			// 切换到下一个短视频
 		}
 		// 下滑切换上一个
 		if (touchDeltaY > 80) {
-			console.log('切换到上一个短视频');
+			// 切换到上一个短视频
 		}
 
 		touchDeltaY = 0;
