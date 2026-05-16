@@ -179,10 +179,7 @@ export const DOMAIN_GIST_URL = 'https://gist.githubusercontent.com/xvideos-domai
 
 /** 硬编码备用域名列表 */
 export const FALLBACK_DOMAINS = [
-	'https://api.xvideos1.com',
-	'https://api.xvideos2.com',
-	'https://api.xvideos3.com',
-	'https://api.xvideos4.com'
+	'https://9901.555554.xyz'
 ];
 
 /** API 请求超时时间（毫秒） */
