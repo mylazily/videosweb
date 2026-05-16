@@ -4,7 +4,6 @@
   import NavBar from '$components/NavBar.svelte';
   import CategoryTabs from '$components/CategoryTabs.svelte';
   import VideoCard from '$components/VideoCard.svelte';
-  import { getBaseUrl } from '$lib/apiConfig';
 
   type Video = {
     id: string | number;
@@ -14,14 +13,16 @@
     rating: number;
     category?: string;
     year?: string;
-    area?: string;
   };
 
   let videos = $state<Video[]>([]);
   let loading = $state(true);
 
-  onMount(() => {
+  onMount(async () => {
+    // 动态导入，减少首屏 bundle
+   	const { getBaseUrl } = await import('$lib/apiConfig');
     const base = getBaseUrl();
+
     fetch(`${base}/api/v1/videos/hot?page=1&page_size=12`, { signal: AbortSignal.timeout(3000) })
       .then(r => r.json())
       .then(d => { videos = d.data?.list || d.data || []; })
