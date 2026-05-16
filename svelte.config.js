@@ -13,22 +13,10 @@ const config = {
 			precompress: true,
 			strict: true
 		}),
-		// 预渲染配置：仅预渲染静态页面，避免动态路由预渲染失败
+		// 预渲染配置：仅预渲染静态页面
 		prerender: {
 			entries: [
-				'/',
-				'/short',
-				'/rank',
-				'/tags',
-				'/category',
-				'/tags/action',
-				'/tags/comedy',
-				'/tags/romance',
-				'/tags/scifi',
-				'/tags/horror',
-				'/tags/war',
-				'/tags/anime',
-				'/tags/variety'
+				'/'
 			]
 		},
 		alias: {
