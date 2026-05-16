@@ -1,21 +1,9 @@
 /**
- * 观看历史页数据加载
+ * 观看历史页 - 客户端加载数据（需要 token）
  */
-import { getBaseUrl } from '$lib/apiConfig';
 
 export async function load() {
-	const base = getBaseUrl();
-	let history: any[] = [];
-
-	try {
-		const res = await fetch(`${base}/api/v1/user/history?page=1&page_size=20`);
-		if (res.ok) {
-			const data = await res.json();
-			history = data?.data?.list || data?.data || data?.list || [];
-		}
-	} catch {}
-
 	return {
-		history
+		history: [] as any[]
 	};
 }

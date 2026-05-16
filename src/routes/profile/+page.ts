@@ -1,22 +1,10 @@
 /**
- * 个人中心页数据加载
+ * 个人中心页 - 客户端加载数据（需要 token）
  */
-import { getBaseUrl } from '$lib/apiConfig';
 
 export async function load() {
-	const base = getBaseUrl();
-	let user: any = null;
-
-	try {
-		const res = await fetch(`${base}/api/v1/user/profile`);
-		if (res.ok) {
-			const data = await res.json();
-			user = data?.data || null;
-		}
-	} catch {}
-
 	return {
-		user,
+		user: null as any,
 		stats: {
 			watchCount: 0,
 			favoriteCount: 0,

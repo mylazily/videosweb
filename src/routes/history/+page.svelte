@@ -52,8 +52,12 @@
   onMount(async () => {
     try {
       const { getBaseUrl } = await import('$lib/apiConfig');
+      const { getToken } = await import('$lib/auth');
       const base = getBaseUrl();
-      const res = await fetch(`${base}/api/v1/user/history`, { signal: AbortSignal.timeout(3000) });
+      const token = getToken();
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const res = await fetch(`${base}/api/v1/user/history`, { headers, signal: AbortSignal.timeout(3000) });
       if (res.ok) {
         const data = await res.json();
         history = data.data?.list || data.data || [];
