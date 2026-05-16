@@ -15,18 +15,24 @@
     year?: string;
   };
 
-  let videos = $state<Video[]>([]);
-  let loading = $state(true);
+  let { data } = $props();
+  
+  // 使用预渲染数据，如果没有则客户端加载
+  let videos = $state<Video[]>(data.videos || []);
+  let loading = $state(!data.loaded);
 
   onMount(async () => {
-    const { getBaseUrl } = await import('$lib/apiConfig');
-    const base = getBaseUrl();
+    // 如果预渲染没有数据，客户端动态加载
+    if (!data.loaded) {
+      const { getBaseUrl } = await import('$lib/apiConfig');
+      const base = getBaseUrl();
 
-    fetch(`${base}/api/v1/videos/hot?page=1&page_size=12`, { signal: AbortSignal.timeout(3000) })
-      .then(r => r.json())
-      .then(d => { videos = d.data?.list || d.data || []; })
-      .catch(() => {})
-      .finally(() => loading = false);
+      fetch(`${base}/api/v1/videos/hot?page=1&page_size=12`, { signal: AbortSignal.timeout(3000) })
+        .then(r => r.json())
+        .then(d => { videos = d.data?.list || d.data || []; })
+        .catch(() => {})
+        .finally(() => loading = false);
+    }
   });
 </script>
 

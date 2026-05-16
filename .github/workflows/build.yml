@@ -39,13 +39,13 @@ jobs:
           echo "=== 拉取最新视频数据 ==="
           mkdir -p static/data
 
-          # 首页推荐数据
-          curl -sf --max-time 30 "${API_BASE:-https://9901.555554.xyz}/api/v1/videos/hot?page=1&page_size=50" \
-            -o static/data/hot.json || echo '{"data":[]}' > static/data/hot.json
+          # 首页推荐数据（预渲染用）
+          curl -sf --max-time 30 "${API_BASE:-https://9901.555554.xyz}/api/v1/videos/hot?page=1&page_size=12" \
+            -o static/data/hot.json || echo '{"data":{"list":[]}}' > static/data/hot.json
 
           # 最新数据
-          curl -sf --max-time 30 "${API_BASE:-https://9901.555554.xyz}/api/v1/videos/latest?page=1&page_size=50" \
-            -o static/data/latest.json || echo '{"data":[]}' > static/data/latest.json
+          curl -sf --max-time 30 "${API_BASE:-https://9901.555554.xyz}/api/v1/videos/latest?page=1&page_size=12" \
+            -o static/data/latest.json || echo '{"data":{"list":[]}}' > static/data/latest.json
 
           # 分类数据
           curl -sf --max-time 15 "${API_BASE:-https://9901.555554.xyz}/api/v1/categories" \
@@ -56,8 +56,9 @@ jobs:
             -o static/data/hot-search.json || echo '{"data":[]}' > static/data/hot-search.json
 
           echo "=== 数据拉取完成 ==="
+          ls -la static/data/
 
-          # 2. 构建 SvelteKit 静态产物
+          # 2. 构建 SvelteKit 静态产物（预渲染首页）
           npm run build
 
       - name: Deploy to Cloudflare Pages
@@ -73,4 +74,5 @@ jobs:
           echo "- **时间**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
           echo "- **触发**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
           echo "- **缓存策略**: HTML 12小时死缓存，图片永久缓存" >> $GITHUB_STEP_SUMMARY
+          echo "- **预渲染**: 首页数据直出" >> $GITHUB_STEP_SUMMARY
           echo "- **下次构建**: 12小时后" >> $GITHUB_STEP_SUMMARY
