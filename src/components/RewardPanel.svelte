@@ -106,6 +106,29 @@
 	}
 
 	/**
+	 * 处理任务点击
+	 */
+	function handleTaskAction(task: AdTask): void {
+		switch (task.type) {
+			case 'watch_ad':
+				// 打开广告观看页面或触发广告
+				console.log('观看广告');
+				break;
+			case 'share':
+				// 打开分享菜单
+				console.log('分享视频');
+				break;
+			case 'invite':
+				// 打开邀请页面
+				console.log('邀请好友');
+				break;
+			default:
+				break;
+		}
+		onClose();
+	}
+
+	/**
 	 * 获取任务图标
 	 */
 	function getTaskIcon(type: string): string {
@@ -274,7 +297,10 @@
 								{:else if task.is_completed && task.completed_count >= task.max_count}
 									<span class="text-xs text-green-500 font-medium">已完成</span>
 								{:else}
-									<button class="px-3 py-1.5 text-xs bg-bilibili text-white rounded-full font-medium btn-press whitespace-nowrap">
+									<button
+										onclick={() => handleTaskAction(task)}
+										class="px-3 py-1.5 text-xs bg-bilibili text-white rounded-full font-medium btn-press whitespace-nowrap"
+									>
 										去完成
 									</button>
 								{/if}

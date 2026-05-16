@@ -326,7 +326,7 @@
 			<!-- 步骤 3: 等待支付 -->
 			{#if step === 'paying'}
 				<div class="p-6 text-center">
-					<div class="w-16 h-16 mx-auto mb-4 border-3 border-gray-200 border-t-bilibili rounded-full animate-spin"></div>
+					<div class="w-16 h-16 mx-auto mb-4 border-[3px] border-gray-200 border-t-bilibili rounded-full animate-spin"></div>
 					<p class="text-base font-medium text-gray-900 dark:text-dark-text mb-2">等待支付...</p>
 					<p class="text-sm text-gray-400 mb-4">请在 {PAYMENT_ORDER_EXPIRE / 60} 分钟内完成支付</p>
 

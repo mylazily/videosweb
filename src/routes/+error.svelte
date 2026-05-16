@@ -23,12 +23,11 @@
 	const isNotFound = $derived(status === 404);
 
 	// 获取错误堆栈（仅在开发模式）
-	const errorStack = $derived(() => {
-		if (import.meta.env.DEV && page.error && 'stack' in page.error) {
-			return (page.error as Error).stack;
-		}
-		return null;
-	});
+	const errorStack = $derived(
+		import.meta.env.DEV && page.error && 'stack' in page.error
+			? (page.error as Error).stack
+			: null
+	);
 </script>
 
 <div class="min-h-screen flex flex-col items-center justify-center px-4 safe-bottom">
