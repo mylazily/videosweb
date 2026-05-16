@@ -23,31 +23,21 @@
 		loading = true;
 		pageNum++;
 
-		// 模拟加载
-		await new Promise((resolve) => setTimeout(resolve, 800));
-
-		const moreVideos: Video[] = Array.from({ length: 10 }, (_, i) => ({
-			id: `cat_${slug}_more_${pageNum}_${i}`,
-			title: `${category.name} - 更多作品 ${pageNum * 10 + i + 1}`,
-			cover: `https://picsum.photos/seed/${slug}more${pageNum}${i}/400/225`,
-			description: '更多精彩内容',
-			director: '导演',
-			actors: ['演员A'],
-			year: 2024,
-			area: '中国',
-			category: category.name,
-			tags: ['推荐'],
-			rating: 4 + Math.random() * 6,
-			play_count: Math.floor(Math.random() * 500000),
-			comment_count: Math.floor(Math.random() * 5000),
-			update_time: '2024-12-01',
-			sources: []
-		}));
-
-		videos = [...videos, ...moreVideos];
-
-		// 模拟最多 5 页
-		if (pageNum >= 5) hasMore = false;
+		try {
+			const { getBaseUrl } = await import('$lib/apiConfig');
+			const base = getBaseUrl();
+			const res = await fetch(`${base}/api/v1/videos?category=${slug}&page=${pageNum}&page_size=10`);
+			if (res.ok) {
+				const data = await res.json();
+				const moreVideos: Video[] = data.data?.list || data.data || [];
+				videos = [...videos, ...moreVideos];
+				hasMore = moreVideos.length >= 10;
+			} else {
+				hasMore = false;
+			}
+		} catch {
+			hasMore = false;
+		}
 		loading = false;
 	}
 

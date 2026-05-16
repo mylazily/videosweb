@@ -3,11 +3,14 @@
 	 * 首页
 	 * 小红书式瀑布流布局 + 分类标签 + 热门视频 + 最新更新
 	 * 支持无限滚动加载
+	 *
+	 * 数据来源（与后端 router.go 严格对应）：
+	 * - hotVideos: GET /api/v1/videos/hot
+	 * - latestVideos: GET /api/v1/videos/latest
+	 * - randomVideos: GET /api/v1/videos/random
+	 * - hotWords: GET /api/v1/search/hot
 	 */
-	import { page } from '$app/state';
-	import type { Banner, Video } from '$lib/types';
-	import VideoCard from '$components/VideoCard.svelte';
-	import VideoCardPreview from '$components/VideoCardPreview.svelte';
+	import type { Video } from '$lib/types';
 	import CategoryTabs from '$components/CategoryTabs.svelte';
 	import PullRefresh from '$components/PullRefresh.svelte';
 	import SkeletonCard from '$components/SkeletonCard.svelte';
@@ -16,16 +19,15 @@
 
 	let { data } = $props();
 
-	// 轮播状态
-	let currentBanner = $state(0);
-	let banners = $state<Banner[]>(data.banners || []);
-	let allVideos = $state<Video[]>([...(data.hotVideos || []), ...(data.latestVideos || [])]);
+	// 合并热门 + 最新 + 随机推荐作为瀑布流数据源
+	let allVideos = $state<Video[]>([
+		...(data.hotVideos || []),
+		...(data.latestVideos || []),
+		...(data.randomVideos || [])
+	]);
 	let loading = $state(false);
 	let hasMore = $state(true);
 	let currentPage = $state(1);
-
-	// 自动轮播
-	let bannerTimer: ReturnType<typeof setInterval>;
 
 	/** 基于 video id 的确定性哈希函数，避免 Math.random() 导致布局闪烁 */
 	function hashCode(str: string): number {
@@ -38,41 +40,34 @@
 		return Math.abs(hash);
 	}
 
-	function startBannerTimer() {
-		stopBannerTimer();
-		bannerTimer = setInterval(() => {
-			currentBanner = (currentBanner + 1) % banners.length;
-		}, 4000);
-	}
-
-	function stopBannerTimer() {
-		if (bannerTimer) clearInterval(bannerTimer);
-	}
-
 	// 下拉刷新
 	async function handleRefresh() {
 		loading = true;
 		try {
 			const base = getBaseUrl();
-			const [bannerRes, hotRes, latestRes] = await Promise.allSettled([
-				fetch(`${base}/api/home/banner`),
-				fetch(`${base}/api/video/hot?page=1&page_size=10`),
-				fetch(`${base}/api/video/latest?page=1&page_size=10`)
+			const [hotRes, latestRes, randomRes] = await Promise.allSettled([
+				fetch(`${base}/api/v1/videos/hot?page=1&page_size=12`),
+				fetch(`${base}/api/v1/videos/latest?page=1&page_size=12`),
+				fetch(`${base}/api/v1/videos/random?page_size=6`)
 			]);
 
-			if (bannerRes.status === 'fulfilled' && bannerRes.value.ok) {
-				const data = await bannerRes.value.json();
-				banners = data.data || data.banners || [];
-			}
+			const videos: Video[] = [];
 			if (hotRes.status === 'fulfilled' && hotRes.value.ok) {
 				const data = await hotRes.value.json();
-				const hotVideos = data.data?.list || data.data || [];
-				allVideos = [...hotVideos];
+				videos.push(...(data.data?.list || data.data || []));
 			}
 			if (latestRes.status === 'fulfilled' && latestRes.value.ok) {
 				const data = await latestRes.value.json();
-				const latestVideos = data.data?.list || data.data || [];
-				allVideos = [...allVideos, ...latestVideos];
+				videos.push(...(data.data?.list || data.data || []));
+			}
+			if (randomRes.status === 'fulfilled' && randomRes.value.ok) {
+				const data = await randomRes.value.json();
+				videos.push(...(data.data?.list || data.data || []));
+			}
+			if (videos.length > 0) {
+				allVideos = videos;
+				currentPage = 1;
+				hasMore = true;
 			}
 		} catch {
 			// Refresh failed, keep existing data
@@ -89,7 +84,7 @@
 
 		try {
 			const base = getBaseUrl();
-			const response = await fetch(`${base}/api/video/hot?page=${currentPage}&page_size=10`);
+			const response = await fetch(`${base}/api/v1/videos/hot?page=${currentPage}&page_size=10`);
 			if (!response.ok) throw new Error('Failed to load');
 			const data = await response.json();
 			const newVideos: Video[] = data.data?.list || data.data || [];
@@ -108,62 +103,13 @@
 
 	// 分类选择
 	function handleCategorySelect(slug: string) {
-		// 跳转到分类页
 		window.location.href = `/category/${slug}`;
 	}
-
-	// 生命周期
-	$effect(() => {
-		if (banners.length > 0) {
-			startBannerTimer();
-		}
-		return () => stopBannerTimer();
-	});
 </script>
 
 <PullRefresh onRefresh={handleRefresh} {loading} />
 
 <div class="pb-4 safe-bottom">
-	<!-- 轮播 Banner -->
-	{#if banners.length > 0}
-		<div class="relative overflow-hidden" style="height: 180px;">
-			<div
-				class="flex transition-transform duration-500 ease-out h-full"
-				style="transform: translateX(-{currentBanner * 100}%);"
-			>
-				{#each banners as banner}
-					<a href={banner.link} class="flex-shrink-0 w-full h-full relative">
-						<img
-							src={banner.cover}
-							alt={banner.title}
-							class="w-full h-full object-cover"
-							referrerpolicy="no-referrer"
-						/>
-						<div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
-							<h2 class="text-white text-base font-bold">{banner.title}</h2>
-							<p class="text-white/70 text-xs mt-1">{banner.description}</p>
-						</div>
-					</a>
-				{/each}
-			</div>
-
-			<!-- 指示器 -->
-			<div class="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
-				{#each banners as _, i}
-					<button
-						class="h-1.5 rounded-full transition-all duration-300"
-						class:w-4={i === currentBanner}
-						class:w-1.5={i !== currentBanner}
-						class:bg-white={i === currentBanner}
-						class:bg-white-opacity-40={i !== currentBanner}
-						aria-label="切换到第{i + 1}张轮播图"
-						onclick={() => currentBanner = i}
-					></button>
-				{/each}
-			</div>
-		</div>
-	{/if}
-
 	<!-- 分类标签 -->
 	<div class="mt-3">
 		<CategoryTabs onSelect={handleCategorySelect} />
@@ -221,7 +167,7 @@
 									{:else}
 										<span class="text-xs text-gray-400">{video.category}</span>
 									{/if}
-									{#if video.tags.length > 0}
+									{#if video.tags && video.tags.length > 0}
 										<span class="text-[10px] text-gray-400">#{video.tags[0]}</span>
 									{/if}
 								</div>
@@ -235,10 +181,6 @@
 </div>
 
 <style>
-	.bg-white-opacity-40 {
-		background-color: rgba(255, 255, 255, 0.4);
-	}
-
 	.waterfall-item {
 		break-inside: avoid;
 		margin-bottom: 8px;

@@ -5,7 +5,7 @@
 	 * 使用 Svelte 5 runes
 	 */
 	import { onMount } from 'svelte';
-	import { getPaymentChannels, createPaymentOrder, getPaymentOrderStatus, getVIPPlans } from '$lib/api';
+	import { getPaymentChannels, adminCreatePaymentOrder, getVIPStatus, verifyVIPPayment } from '$lib/api';
 	import { PAYMENT_POLL_INTERVAL, PAYMENT_ORDER_EXPIRE, VIP_PLANS } from '$lib/constants';
 	import { THEME } from '$lib/constants';
 	import type { PaymentChannel, PaymentOrder, VIPPlan } from '$lib/types';
@@ -91,7 +91,7 @@
 		error = '';
 
 		try {
-			const res = await createPaymentOrder({
+			const res = await adminCreatePaymentOrder({
 				channel_id: selectedChannel.id,
 				plan_id: selectedPlan.id,
 				video_id: videoId
@@ -121,17 +121,16 @@
 			if (!currentOrder) return;
 
 			try {
-				const res = await getPaymentOrderStatus(currentOrder.order_no);
+				const res = await getVIPStatus();
 				if (res.code === 0 && res.data) {
-					const order = res.data.order;
-
-					if (order.status === 'paid') {
+					const status = res.data as any;
+					if (status.is_active || status.status === 'active') {
 						stopPolling();
 						payResult = 'success';
 						step = 'result';
 						if (isTGMiniApp()) hapticFeedback('success');
 						onSuccess?.();
-					} else if (order.status === 'expired' || order.status === 'failed') {
+					} else {
 						stopPolling();
 						payResult = 'failed';
 						step = 'result';

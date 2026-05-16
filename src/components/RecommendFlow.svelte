@@ -44,28 +44,14 @@
 
 			hasMore = newVideos.length >= 10;
 		} catch {
-			// 加载失败时使用模拟数据
-			if (reset || videos.length === 0) {
-				videos = generateMockRecommendations();
+			// 加载失败时返回空列表
+			if (reset) {
+				videos = [];
 			}
 			hasMore = false;
 		} finally {
 			loading = false;
 		}
-	}
-
-	// 模拟推荐数据
-	function generateMockRecommendations(): RecommendVideo[] {
-		return Array.from({ length: 10 }, (_, i) => ({
-			id: `rec_${videoId}_${i}`,
-			title: `推荐视频 ${i + 1} - 猜你喜欢`,
-			cover: `https://picsum.photos/seed/rec_${videoId}_${i}/400/225`,
-			preview_url: `https://picsum.photos/seed/rec_${videoId}_${i}_preview/400/225`,
-			play_count: Math.floor(Math.random() * 1000000),
-			rating: 4 + Math.random() * 6,
-			tags: [['推荐', '热门'], ['经典', '高分'], ['新片', '热播']][i % 3],
-			reason: ['因为你看了相关视频', '热门推荐', '相似内容', '猜你喜欢', '高分佳作'][i % 5]
-		}));
 	}
 
 	// 加载更多

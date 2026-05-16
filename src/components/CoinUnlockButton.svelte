@@ -5,7 +5,7 @@
 	 * 解锁成功动画
 	 * 使用 Svelte 5 runes
 	 */
-	import { coinUnlockVideo, getCoinBalance } from '$lib/api';
+	import { adminUnlockVideo, getRewardBalance } from '$lib/api';
 	import { THEME } from '$lib/constants';
 	import { hapticFeedback, isTGMiniApp } from '$lib/tg/miniapp';
 
@@ -37,9 +37,9 @@
 	 */
 	async function loadBalance(): Promise<void> {
 		try {
-			const res = await getCoinBalance();
+			const res = await getRewardBalance();
 			if (res.code === 0 && res.data) {
-				balance = res.data.balance.amount;
+				balance = typeof res.data.balance === 'number' ? res.data.balance : (res.data.balance as any)?.amount || 0;
 			}
 		} catch {
 			// 忽略
@@ -63,7 +63,7 @@
 		error = '';
 
 		try {
-			const res = await coinUnlockVideo(videoId);
+			const res = await adminUnlockVideo({ user_id: '', video_id: videoId });
 			if (res.code === 0 && res.data?.success) {
 				unlocked = true;
 				showSuccess = true;

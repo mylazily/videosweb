@@ -4,78 +4,153 @@
  */
 
 // ========== API 路径 ==========
+// 所有路径与后端 router.go 严格对应，前缀统一 /api/v1
 
 export const API_PATHS = {
-	// 用户相关
-	USER_LOGIN: '/api/user/login',
-	USER_REGISTER: '/api/user/register',
-	USER_INFO: '/api/user/info',
-	USER_UPDATE: '/api/user/update',
+	// ========== 健康检查 ==========
+	PING: '/api/v1/ping',
+	HEALTH: '/api/v1/health',
 
-	// 视频相关
-	VIDEO_LIST: '/api/video/list',
-	VIDEO_DETAIL: '/api/video/detail',
-	VIDEO_PLAY: '/api/video/play',
-	VIDEO_SEARCH: '/api/video/search',
-	VIDEO_HOT: '/api/video/hot',
-	VIDEO_LATEST: '/api/video/latest',
-	VIDEO_RECOMMEND: '/api/video/recommend',
+	// ========== 认证（公开） ==========
+	USER_LOGIN: '/api/v1/auth/login',
+	USER_REGISTER: '/api/v1/auth/register',
+	AUTH_REFRESH: '/api/v1/auth/refresh',
 
-	// 分类相关
-	CATEGORY_LIST: '/api/category/list',
-	CATEGORY_VIDEOS: '/api/category/videos',
+	// ========== 用户（需认证） ==========
+	USER_PROFILE: '/api/v1/user/profile',
+	USER_UPDATE: '/api/v1/user/profile',
+	USER_PASSWORD: '/api/v1/user/password',
 
-	// 评论相关
-	COMMENT_LIST: '/api/comment/list',
-	COMMENT_ADD: '/api/comment/add',
-	COMMENT_LIKE: '/api/comment/like',
+	// ========== 视频（公开） ==========
+	VIDEO_LIST: '/api/v1/videos',
+	VIDEO_DETAIL: '/api/v1/videos',           // GET /api/v1/videos/:id
+	VIDEO_HOT: '/api/v1/videos/hot',
+	VIDEO_LATEST: '/api/v1/videos/latest',
+	VIDEO_RANDOM: '/api/v1/videos/random',
+	VIDEO_EPISODES: '/api/v1/videos',          // GET /api/v1/videos/:id/episodes
+	VIDEO_TAGS: '/api/v1/videos',              // GET /api/v1/videos/:id/tags
+	VIDEO_RELATED: '/api/v1/videos',           // GET /api/v1/videos/:id/related
+	VIDEO_SEARCH: '/api/v1/search',
+	SEARCH_HOT: '/api/v1/search/hot',
+	VIDEO_WATCH: '/api/v1/videos',             // POST /api/v1/videos/:id/watch（需认证）
+	VIDEO_PLAY: '/api/v1/videos',              // GET /api/v1/videos/:id/play
 
-	// 弹幕相关
-	DANMAKU_LIST: '/api/danmaku/list',
-	DANMAKU_SEND: '/api/danmaku/send',
+	// ========== 分类（公开） ==========
+	CATEGORY_LIST: '/api/v1/categories',
 
-	// 排行榜
-	RANK_LIST: '/api/rank/list',
-
-	// 观看历史
-	HISTORY_LIST: '/api/history/list',
-	HISTORY_ADD: '/api/history/add',
-	HISTORY_DELETE: '/api/history/delete',
-	HISTORY_CLEAR: '/api/history/clear',
-
-	// 首页
-	HOME_BANNER: '/api/home/banner',
-	HOME_HOT_WORDS: '/api/home/hot-words',
-
-	// 健康检查
-	HEALTH: '/api/health',
-
-	// 短视频相关
-	SHORT_LIST: '/api/v1/shorts',
-	SHORT_DETAIL: '/api/v1/shorts',
-	SHORT_LIKE: '/api/v1/shorts',
-	SHORT_SHARE: '/api/v1/shorts',
-
-	// 标签相关
+	// ========== 标签（公开） ==========
 	TAG_LIST: '/api/v1/tags',
-	TAG_DETAIL: '/api/v1/tags',
-	TAG_VIDEOS: '/api/v1/tags',
+	TAG_DETAIL: '/api/v1/tags',               // GET /api/v1/tags/:slug
+	TAG_VIDEOS: '/api/v1/tags',               // GET /api/v1/tags/:slug/videos
 
-	// 推荐相关
-	VIDEO_RELATED: '/api/v1/videos',
+	// ========== 短视频（公开） ==========
+	SHORT_LIST: '/api/v1/shorts',
+	SHORT_DETAIL: '/api/v1/shorts',           // GET /api/v1/shorts/:id
+	SHORT_RANDOM: '/api/v1/shorts/random',
+	SHORT_VIEW: '/api/v1/shorts',             // POST /api/v1/shorts/:id/view
+	SHORT_LIKE: '/api/v1/shorts',             // POST /api/v1/shorts/:id/like
 
-	// 分享相关
-	SHARE_CREATE: '/api/v1/share',
-	SHARE_UNLOCK: '/api/v1/share',
+	// ========== 推荐（公开） ==========
+	RECOMMENDATIONS: '/api/v1/recommendations',
 
-	// 金币相关
-	COIN_BALANCE: '/api/v1/coin/balance',
-	COIN_RECORDS: '/api/v1/coin/records',
+	// ========== 排行榜（公开） ==========
+	RANK_DAILY: '/api/v1/rank/daily',
+	RANK_WEEKLY: '/api/v1/rank/weekly',
+	RANK_MONTHLY: '/api/v1/rank/monthly',
+	RANK_CATEGORY: '/api/v1/rank/category',    // GET /api/v1/rank/category/:category
 
-	// 设备相关
+	// ========== 评论（公开查看，需认证操作） ==========
+	COMMENT_LIST: '/api/v1/videos',            // GET /api/v1/videos/:id/comments
+	COMMENT_ADD: '/api/v1/videos',             // POST /api/v1/videos/:id/comments
+	COMMENT_DELETE: '/api/v1/comments',        // DELETE /api/v1/comments/:id
+	COMMENT_LIKE: '/api/v1/comments',          // POST /api/v1/comments/:id/like
+	COMMENT_UNLIKE: '/api/v1/comments',        // DELETE /api/v1/comments/:id/like
+	COMMENT_REPLIES: '/api/v1/comments',       // GET /api/v1/comments/:id/replies
+
+	// ========== 弹幕（公开查看，需认证发送） ==========
+	DANMAKU_LIST: '/api/v1/videos',            // GET /api/v1/videos/:id/danmaku
+	DANMAKU_EPISODE: '/api/v1/videos',         // GET /api/v1/videos/:id/episodes/:ep_id/danmaku
+	DANMAKU_SEND: '/api/v1/videos',            // POST /api/v1/videos/:id/episodes/:ep_id/danmaku
+
+	// ========== 观看历史（需认证） ==========
+	HISTORY_LIST: '/api/v1/user/history',
+
+	// ========== 设备指纹（公开） ==========
 	DEVICE_REGISTER: '/api/v1/device/register',
+	DEVICE_PROFILE: '/api/v1/device/profile',
+	DEVICE_UNLOCK: '/api/v1/device/unlock',
+	DEVICE_CHECK: '/api/v1/device/check',     // GET /api/v1/device/check/:videoId
 
-	// SEO
+	// ========== 分享裂变（公开） ==========
+	SHARE_CREATE: '/api/v1/share/create',
+	SHARE_DETAIL: '/api/v1/share',            // GET /api/v1/share/:code
+	SHARE_CLICK: '/api/v1/share',             // POST /api/v1/share/:code/click
+
+	// ========== P2P 信令（公开） ==========
+	P2P_REGISTER: '/api/v1/p2p/register',
+	P2P_HEARTBEAT: '/api/v1/p2p/heartbeat',
+	P2P_UNREGISTER: '/api/v1/p2p/unregister',
+	P2P_OFFER: '/api/v1/p2p/signal/offer',
+	P2P_ANSWER: '/api/v1/p2p/signal/answer',
+	P2P_ICE: '/api/v1/p2p/signal/ice',
+	P2P_PEERS: '/api/v1/p2p/peers',           // GET /api/v1/p2p/peers/:videoId
+
+	// ========== Push 推送（公开） ==========
+	PUSH_SUBSCRIBE: '/api/v1/push/subscribe',
+	PUSH_UNSUBSCRIBE: '/api/v1/push/subscribe',
+	PUSH_STATS: '/api/v1/push/stats',
+
+	// ========== TG Bot（公开） ==========
+	TG_WEBHOOK: '/api/v1/tg/webhook',
+	TG_CHANNELS: '/api/v1/tg/channels',
+	TG_MINIAPP_SESSION: '/api/v1/tg/miniapp/session',
+	TG_MINIAPP_STATS: '/api/v1/tg/miniapp/stats',
+
+	// ========== X.com（公开） ==========
+	X_ACCOUNTS: '/api/v1/x/accounts',
+	X_POSTS: '/api/v1/x/posts',
+
+	// ========== 支付（公开接口） ==========
+	PAYMENT_CHANNELS: '/api/v1/payment/channels',
+	PAYMENT_VIP_STATUS: '/api/v1/payment/vip/status',
+	PAYMENT_VERIFY: '/api/v1/payment/verify',
+
+	// ========== 广告金币（公开接口） ==========
+	REWARD_TASKS: '/api/v1/reward/tasks',
+	REWARD_BALANCE: '/api/v1/reward/balance',
+	REWARD_HISTORY: '/api/v1/reward/history',
+	REWARD_DASHBOARD: '/api/v1/reward/dashboard',
+
+	// ========== 域名轮询（公开） ==========
+	DOMAIN_ACTIVE: '/api/v1/domain/active',
+	DOMAIN_LIST: '/api/v1/domain/list',
+	DOMAIN_HEALTHY: '/api/v1/domains/healthy',
+
+	// ========== 资源站监控（公开） ==========
+	STATION_STATUS: '/api/v1/stations/status',
+	STATION_BEST: '/api/v1/stations/best',
+	STATION_ALIVE: '/api/v1/stations/alive',
+
+	// ========== WebSocket ==========
+	WS_DANMAKU: '/api/v1/ws/danmaku',         // GET /api/v1/ws/danmaku/:videoId
+	WS_ONLINE: '/api/v1/ws/online',            // GET /api/v1/ws/online/:videoId
+
+	// ========== 管理后台（需认证+管理员） ==========
+	ADMIN_USERS: '/api/v1/admin/users',
+	ADMIN_COLLECT_SOURCES: '/api/v1/admin/collect/sources',
+	ADMIN_SITES: '/api/v1/admin/sites',
+	ADMIN_REDIRECTS: '/api/v1/admin/redirects',
+	ADMIN_PUSH_SEND: '/api/v1/admin/push/send',
+	ADMIN_TG_BROADCAST: '/api/v1/admin/tg/broadcast',
+	ADMIN_X_POST: '/api/v1/admin/x/post',
+	ADMIN_PAYMENT_CREATE: '/api/v1/admin/payment/create',
+	ADMIN_DOMAIN_SWITCH: '/api/v1/admin/domain/switch',
+	ADMIN_REWARD_COMPLETE: '/api/v1/admin/reward/complete',
+	ADMIN_REWARD_UNLOCK: '/api/v1/admin/reward/unlock',
+	ADMIN_REWARD_CHECKIN: '/api/v1/admin/reward/checkin',
+	ADMIN_STATIONS_CHECK: '/api/v1/admin/stations/check',
+
+	// ========== SEO（无 /api/v1 前缀） ==========
 	SITEMAP: '/sitemap.xml',
 	ROBOTS: '/robots.txt'
 } as const;

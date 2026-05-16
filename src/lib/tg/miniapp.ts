@@ -5,7 +5,7 @@
  */
 
 import type { TGUser, TGSession, TGThemeParams } from '$lib/types';
-import { sendTGSession } from '$lib/api';
+import { registerTGMiniAppSession } from '$lib/api';
 
 // ========== TG WebApp 类型声明 ==========
 
@@ -282,7 +282,7 @@ export async function sendSessionToBackend(): Promise<void> {
 	if (!session) return;
 
 	try {
-		await sendTGSession(session);
+		await registerTGMiniAppSession(session);
 		console.log('[TG] 会话数据已发送到后端');
 	} catch (error) {
 		console.error('[TG] 发送会话数据失败:', error);

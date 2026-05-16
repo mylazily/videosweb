@@ -13,7 +13,7 @@ import {
 	DOMAIN_GIST_URL
 } from '$lib/constants';
 import { getBaseUrl, switchDomain as apiSwitchDomain } from '$lib/apiConfig';
-import { reportDomainSwitch } from '$lib/api';
+import { post } from '$lib/api';
 
 // ========== 事件监听器 ==========
 
@@ -137,8 +137,8 @@ export async function switchDomain(
 	// 通知监听器
 	emitDomainSwitch(event);
 
-	// 上报到后端（非阻塞）
-	reportDomainSwitch(event).catch(() => {
+	// 上报到后端（非阻塞，使用管理员路由）
+	post('/api/v1/admin/domain/switch', event).catch(() => {
 		// 上报失败不影响切换
 	});
 

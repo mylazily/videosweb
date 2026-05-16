@@ -5,7 +5,7 @@
 	 * 使用 Svelte 5 runes
 	 */
 	import { onMount } from 'svelte';
-	import { getCoinBalance, getDailyTasks, getCoinTransactions, dailyCheckin } from '$lib/api';
+	import { getRewardBalance, getDailyTasks, getRewardHistory, adminDailyCheckin } from '$lib/api';
 	import { THEME, CHECKIN_REWARD, AD_REWARD, SHARE_REWARD, INVITE_REWARD } from '$lib/constants';
 	import { hapticFeedback, isTGMiniApp } from '$lib/tg/miniapp';
 	import type { AdTask, CoinTransaction } from '$lib/types';
@@ -34,10 +34,9 @@
 	 */
 	async function loadBalance(): Promise<void> {
 		try {
-			const res = await getCoinBalance();
+			const res = await getRewardBalance();
 			if (res.code === 0 && res.data) {
-				balance = res.data.balance.amount;
-				frozenAmount = res.data.balance.frozen_amount;
+				balance = typeof res.data.balance === 'number' ? res.data.balance : (res.data.balance as any)?.amount || 0;
 			}
 		} catch {
 			// 忽略
@@ -70,7 +69,7 @@
 	async function loadTransactions(): Promise<void> {
 		loading = true;
 		try {
-			const res = await getCoinTransactions({ page: 1, page_size: 20 });
+			const res = await getRewardHistory({ page: 1, page_size: 20 });
 			if (res.code === 0 && res.data) {
 				transactions = res.data.transactions;
 			}
@@ -89,7 +88,7 @@
 		checkinLoading = true;
 
 		try {
-			const res = await dailyCheckin();
+			const res = await adminDailyCheckin({ user_id: '' });
 			if (res.code === 0 && res.data) {
 				balance += res.data.reward;
 				// 更新任务状态

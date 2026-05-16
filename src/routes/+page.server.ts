@@ -7,10 +7,15 @@
  * - Go 后端负载接近 0，99% 请求由 CF 边缘节点消化
  *
  * 首页每 2-4 小时自动更新一次，满足"几小时更新即可"的需求
+ *
+ * API 路径与后端 router.go 严格对应：
+ * - 热门视频：GET /api/v1/videos/hot
+ * - 最新视频：GET /api/v1/videos/latest
+ * - 随机推荐：GET /api/v1/videos/random
+ * - 热门搜索词：GET /api/v1/search/hot
  */
 import type { PageServerLoad } from './$types';
 import { getBaseUrl } from '$lib/apiConfig';
-import { API_PATHS } from '$lib/constants';
 
 export const load: PageServerLoad = async ({ fetch: fetchFn, setHeaders }) => {
 	// 告诉 Cloudflare 边缘节点缓存策略
@@ -25,26 +30,19 @@ export const load: PageServerLoad = async ({ fetch: fetchFn, setHeaders }) => {
 
 	try {
 		// 并发请求所有首页数据
-		const [bannerRes, hotWordsRes, hotVideosRes, latestVideosRes] = await Promise.allSettled([
-			fetchFn(`${base}${API_PATHS.HOME_BANNER}`, { headers }),
-			fetchFn(`${base}${API_PATHS.HOME_HOT_WORDS}`, { headers }),
-			fetchFn(`${base}${API_PATHS.VIDEO_HOT}?page=1&page_size=10`, { headers }),
-			fetchFn(`${base}${API_PATHS.VIDEO_LATEST}?page=1&page_size=10`, { headers })
+		// 所有路径与后端 router.go 严格对应，确保不会 404
+		const [hotVideosRes, latestVideosRes, randomRes, hotWordsRes] = await Promise.allSettled([
+			fetchFn(`${base}/api/v1/videos/hot?page=1&page_size=12`, { headers }),
+			fetchFn(`${base}/api/v1/videos/latest?page=1&page_size=12`, { headers }),
+			fetchFn(`${base}/api/v1/videos/random?page_size=6`, { headers }),
+			fetchFn(`${base}/api/v1/search/hot`, { headers })
 		]);
 
-		let banners: any[] = [];
-		let hotWords: any[] = [];
 		let hotVideos: any[] = [];
 		let latestVideos: any[] = [];
+		let randomVideos: any[] = [];
+		let hotWords: any[] = [];
 
-		if (bannerRes.status === 'fulfilled' && bannerRes.value.ok) {
-			const data = await bannerRes.value.json();
-			banners = data.data || data.banners || [];
-		}
-		if (hotWordsRes.status === 'fulfilled' && hotWordsRes.value.ok) {
-			const data = await hotWordsRes.value.json();
-			hotWords = data.data || data.hot_words || [];
-		}
 		if (hotVideosRes.status === 'fulfilled' && hotVideosRes.value.ok) {
 			const data = await hotVideosRes.value.json();
 			hotVideos = data.data?.list || data.data || data.videos || [];
@@ -53,21 +51,29 @@ export const load: PageServerLoad = async ({ fetch: fetchFn, setHeaders }) => {
 			const data = await latestVideosRes.value.json();
 			latestVideos = data.data?.list || data.data || data.videos || [];
 		}
+		if (randomRes.status === 'fulfilled' && randomRes.value.ok) {
+			const data = await randomRes.value.json();
+			randomVideos = data.data?.list || data.data || data.videos || [];
+		}
+		if (hotWordsRes.status === 'fulfilled' && hotWordsRes.value.ok) {
+			const data = await hotWordsRes.value.json();
+			hotWords = data.data || data.hot_words || data.words || [];
+		}
 
 		return {
-			banners,
-			hotWords,
 			hotVideos,
-			latestVideos
+			latestVideos,
+			randomVideos,
+			hotWords
 		};
 	} catch {
 		// Go 后端不可用时返回空数据
 		// Cloudflare 会缓存这个空页面，但 2 小时后会自动重试
 		return {
-			banners: [],
-			hotWords: [],
 			hotVideos: [],
-			latestVideos: []
+			latestVideos: [],
+			randomVideos: [],
+			hotWords: []
 		};
 	}
 };
