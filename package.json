@@ -2,7 +2,7 @@
   "name": "videosweb",
   "version": "1.0.0",
   "private": true,
-  "description": "XVideos 影视聚合系统前端 - SvelteKit 2 + Svelte 5 PWA",
+  "description": "XVideos \u5f71\u89c6\u805a\u5408\u7cfb\u7edf\u524d\u7aef - SvelteKit 2 + Svelte 5 PWA",
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
@@ -10,8 +10,7 @@
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
   },
   "dependencies": {
-    "hls.js": "^1.5.7",
-    "p2p-media-loader-hlsjs": "^2.3.1"
+    "hls.js": "^1.5.7"
   },
   "devDependencies": {
     "@sveltejs/adapter-static": "^3.0.6",
