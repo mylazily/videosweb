@@ -18,7 +18,9 @@
         import PullRefresh from '$components/PullRefresh.svelte';
         import SkeletonCard from '$components/SkeletonCard.svelte';
         import WaterfallGrid from '$components/WaterfallGrid.svelte';
+        import LoadingSpinner from '$components/LoadingSpinner.svelte';
         import { getBaseUrl } from '$lib/apiConfig';
+        import { API_TIMEOUT } from '$lib/constants';
 
         let allVideos = $state<Video[]>([]);
         let hotWords = $state<any[]>([]);
@@ -37,15 +39,29 @@
                 return Math.abs(hash);
         }
 
+        /** 带超时的 fetch */
+        async function fetchWithTimeout(url: string, timeout: number = API_TIMEOUT): Promise<Response> {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), timeout);
+                try {
+                        const response = await fetch(url, { signal: controller.signal });
+                        clearTimeout(timeoutId);
+                        return response;
+                } catch (error) {
+                        clearTimeout(timeoutId);
+                        throw error;
+                }
+        }
+
         /** 加载首页数据 */
         async function loadHomeData() {
                 try {
                         const base = getBaseUrl();
                         const [hotRes, latestRes, randomRes, hotWordsRes] = await Promise.allSettled([
-                                fetch(`${base}/api/v1/videos/hot?page=1&page_size=12`),
-                                fetch(`${base}/api/v1/videos/latest?page=1&page_size=12`),
-                                fetch(`${base}/api/v1/videos/random?page_size=6`),
-                                fetch(`${base}/api/v1/search/hot`)
+                                fetchWithTimeout(`${base}/api/v1/videos/hot?page=1&page_size=12`, 3000),
+                                fetchWithTimeout(`${base}/api/v1/videos/latest?page=1&page_size=12`, 3000),
+                                fetchWithTimeout(`${base}/api/v1/videos/random?page_size=6`, 3000),
+                                fetchWithTimeout(`${base}/api/v1/search/hot`, 2000)
                         ]);
 
                         const videos: Video[] = [];

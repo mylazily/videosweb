@@ -129,15 +129,20 @@ async function fetchDomainsFromGist(): Promise<string[]> {
 /**
  * 检测并激活可用的 API 域名
  * 优先从 GitHub Gist 获取域名列表，失败则使用硬编码域名
- * 逐个 ping 找到第一个可用的域名
+ * 使用竞速模式快速返回第一个可用的域名
  */
 export async function checkAndActiveApi(): Promise<string> {
 	if (isChecking) return currentBaseUrl;
 	checkingStore.set(true);
 
 	try {
-		// 1. 尝试从 Gist 获取域名列表
-		const gistDomains = await fetchDomainsFromGist();
+		// 1. 尝试从 Gist 获取域名列表（快速超时）
+		const gistPromise = fetchDomainsFromGist();
+		const gistTimeout = new Promise<string[]>((resolve) => 
+			setTimeout(() => resolve([]), 1500)
+		);
+		const gistDomains = await Promise.race([gistPromise, gistTimeout]);
+		
 		const allDomains = gistDomains.length > 0 ? gistDomains : FALLBACK_DOMAINS;
 
 		// 2. 更新域名列表状态
@@ -149,37 +154,50 @@ export async function checkAndActiveApi(): Promise<string> {
 		}));
 		domainsStore.set(newDomains);
 
-		// 3. 逐个检测域名（并发检测，取最快的）
-		const results = await Promise.allSettled(
-			allDomains.map(async (domain) => {
-				const latency = await pingDomain(domain);
-				return { domain, latency };
-			})
+		// 3. 竞速模式：返回第一个可用的域名
+		const domainPromises = allDomains.map(async (domain) => {
+			const latency = await pingDomain(domain);
+			return { domain, latency };
+		});
+
+		// 添加一个超时 Promise
+		const timeoutPromise = new Promise<{ domain: string; latency: number }>((_, reject) => 
+			setTimeout(() => reject(new Error('Timeout')), DOMAIN_CHECK_TIMEOUT)
 		);
 
-		// 4. 找到延迟最低的可用域名
 		let bestDomain = '';
 		let bestLatency = Infinity;
-		const updatedDomains = [...newDomains];
 
-		for (const result of results) {
-			if (result.status === 'fulfilled' && result.value.latency > 0) {
-				const { domain, latency } = result.value;
-				// 更新域名状态
-				const idx = updatedDomains.findIndex((d) => d.url === domain);
-				if (idx >= 0) {
-					updatedDomains[idx] = { ...updatedDomains[idx], alive: true, latency };
-				}
-				if (latency < bestLatency) {
-					bestLatency = latency;
-					bestDomain = domain;
+		try {
+			// 等待第一个成功的结果
+			const firstResult = await Promise.race([
+				...domainPromises.map(p => p.then(r => r.latency > 0 ? r : Promise.reject())),
+				timeoutPromise
+			]);
+			bestDomain = firstResult.domain;
+			bestLatency = firstResult.latency;
+		} catch {
+			// 竞速超时或全部失败，等待所有结果
+			const results = await Promise.allSettled(domainPromises);
+			const updatedDomains = [...newDomains];
+
+			for (const result of results) {
+				if (result.status === 'fulfilled' && result.value.latency > 0) {
+					const { domain, latency } = result.value;
+					const idx = updatedDomains.findIndex((d) => d.url === domain);
+					if (idx >= 0) {
+						updatedDomains[idx] = { ...updatedDomains[idx], alive: true, latency };
+					}
+					if (latency < bestLatency) {
+						bestLatency = latency;
+						bestDomain = domain;
+					}
 				}
 			}
+			domainsStore.set(updatedDomains);
 		}
 
-		domainsStore.set(updatedDomains);
-
-		// 5. 设置激活的域名
+		// 4. 设置激活的域名
 		if (bestDomain) {
 			baseUrlStore.set(bestDomain);
 			console.log(`[API] 激活域名: ${bestDomain} (延迟: ${bestLatency}ms)`);

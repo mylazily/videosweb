@@ -183,10 +183,10 @@ export const FALLBACK_DOMAINS = [
 ];
 
 /** API 请求超时时间（毫秒） */
-export const API_TIMEOUT = 1500;
+export const API_TIMEOUT = 5000;
 
 /** 域名探活超时时间（毫秒） */
-export const DOMAIN_CHECK_TIMEOUT = 1500;
+export const DOMAIN_CHECK_TIMEOUT = 3000;
 
 // ========== 分页配置 ==========
 
