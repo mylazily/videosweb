@@ -68,6 +68,7 @@
 	let lastFrameTime = 0;
 	let isPaused = false;
 	let isDestroyed = false;
+	let timeoutIds: number[] = []; // 存储所有setTimeout ID用于清理
 
 	// ========== 轨道管理 ==========
 	let occupiedTracks = new Set<number>();
@@ -288,7 +289,7 @@
 			item.type = 'top';
 
 			// 3秒后移除
-			setTimeout(() => {
+			const topTimeoutId = window.setTimeout(() => {
 				if (!isDestroyed) {
 					const d = activeDanmakus.get(item.id);
 					if (d) {
@@ -297,13 +298,14 @@
 					}
 				}
 			}, 3000);
+			timeoutIds.push(topTimeoutId);
 		} else if (danmaku.type === 'bottom') {
 			item.x = (canvasWidth - textWidth) / 2;
 			item.y = canvasHeight - baseY;
 			item.speed = 0;
 			item.type = 'bottom';
 
-			setTimeout(() => {
+			const bottomTimeoutId = window.setTimeout(() => {
 				if (!isDestroyed) {
 					const d = activeDanmakus.get(item.id);
 					if (d) {
@@ -312,6 +314,7 @@
 					}
 				}
 			}, 3000);
+			timeoutIds.push(bottomTimeoutId);
 		} else {
 			item.x = canvasWidth;
 			item.y = baseY;
@@ -517,6 +520,10 @@
 			cancelAnimationFrame(animationId);
 			animationId = null;
 		}
+
+		// 清理所有setTimeout
+		timeoutIds.forEach(id => clearTimeout(id));
+		timeoutIds = [];
 
 		clearDanmakus();
 
