@@ -1,4 +1,4 @@
-# 大周转架构 - 12小时冰封缓存策略
+# 大周转架构 - 12小时冰封缓存 + 图片永久缓存
 
 # HTML 页面：12小时死缓存 + 24小时后台静默更新
 /*.html
@@ -20,24 +20,26 @@
 /_app/immutable/*
   Cache-Control: public, max-age=31536000, immutable
 
-# 图片资源：7天缓存，允许跨域
+# 图片资源：永久缓存（1年），允许跨域
+# 采集的图片外链通过CF缓存，不存自己服务器
 /*.png
-  Cache-Control: public, max-age=604800
+  Cache-Control: public, max-age=31536000, immutable
   Access-Control-Allow-Origin: *
 /*.jpg
-  Cache-Control: public, max-age=604800
+  Cache-Control: public, max-age=31536000, immutable
   Access-Control-Allow-Origin: *
 /*.jpeg
-  Cache-Control: public, max-age=604800
+  Cache-Control: public, max-age=31536000, immutable
   Access-Control-Allow-Origin: *
 /*.webp
-  Cache-Control: public, max-age=604800
+  Cache-Control: public, max-age=31536000, immutable
   Access-Control-Allow-Origin: *
 /*.svg
-  Cache-Control: public, max-age=604800
+  Cache-Control: public, max-age=31536000, immutable
   Access-Control-Allow-Origin: *
 /*.ico
-  Cache-Control: public, max-age=604800
+  Cache-Control: public, max-age=31536000, immutable
+  Access-Control-Allow-Origin: *
 
 # manifest.json：12小时缓存
 /manifest.json

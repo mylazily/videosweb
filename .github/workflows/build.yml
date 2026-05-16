@@ -1,11 +1,11 @@
 # 大周转架构 - 每12小时自动构建部署
-# 北京时间 08:00 / 20:00（UTC 00:00 / 12:00）
+# 北京时间 03:00 / 15:00（UTC 19:00 / 07:00）
 name: 12H Build & Deploy
 
 on:
   schedule:
-    # 每12小时触发（UTC 00:00 = 北京 08:00，UTC 12:00 = 北京 20:00）
-    - cron: '0 0,12 * * *'
+    # 每12小时触发（UTC 19:00 = 北京 03:00，UTC 07:00 = 北京 15:00）
+    - cron: '0 19,7 * * *'
   workflow_dispatch:
     # 支持手动触发
     inputs:
@@ -72,5 +72,5 @@ jobs:
           echo "## ✅ 构建部署完成" >> $GITHUB_STEP_SUMMARY
           echo "- **时间**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
           echo "- **触发**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **缓存策略**: HTML 12小时死缓存" >> $GITHUB_STEP_SUMMARY
+          echo "- **缓存策略**: HTML 12小时死缓存，图片永久缓存" >> $GITHUB_STEP_SUMMARY
           echo "- **下次构建**: 12小时后" >> $GITHUB_STEP_SUMMARY
