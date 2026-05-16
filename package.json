@@ -10,7 +10,8 @@
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
   },
   "dependencies": {
-    "hls.js": "^1.5.7"
+    "hls.js": "^1.5.7",
+    "p2p-media-loader-hlsjs": "^2.3.1"
   },
   "devDependencies": {
     "@sveltejs/adapter-static": "^3.0.6",
