@@ -1,0 +1,76 @@
+# 大周转架构 - 每12小时自动构建部署
+# 北京时间 08:00 / 20:00（UTC 00:00 / 12:00）
+name: 12H Build & Deploy
+
+on:
+  schedule:
+    # 每12小时触发（UTC 00:00 = 北京 08:00，UTC 12:00 = 北京 20:00）
+    - cron: '0 0,12 * * *'
+  workflow_dispatch:
+    # 支持手动触发
+    inputs:
+      reason:
+        description: '手动触发原因'
+        required: false
+        default: '手动构建'
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Fetch latest data & Build
+        env:
+          API_BASE: ${{ secrets.API_BASE_URL }}
+        run: |
+          # 1. 从 Go 后端拉取最新数据
+          echo "=== 拉取最新视频数据 ==="
+          mkdir -p static/data
+
+          # 首页推荐数据
+          curl -sf --max-time 30 "${API_BASE:-https://9901.555554.xyz}/api/v1/videos/hot?page=1&page_size=50" \
+            -o static/data/hot.json || echo '{"data":[]}' > static/data/hot.json
+
+          # 最新数据
+          curl -sf --max-time 30 "${API_BASE:-https://9901.555554.xyz}/api/v1/videos/latest?page=1&page_size=50" \
+            -o static/data/latest.json || echo '{"data":[]}' > static/data/latest.json
+
+          # 分类数据
+          curl -sf --max-time 15 "${API_BASE:-https://9901.555554.xyz}/api/v1/categories" \
+            -o static/data/categories.json || echo '{"data":[]}' > static/data/categories.json
+
+          # 热门搜索词
+          curl -sf --max-time 15 "${API_BASE:-https://9901.555554.xyz}/api/v1/search/hot" \
+            -o static/data/hot-search.json || echo '{"data":[]}' > static/data/hot-search.json
+
+          echo "=== 数据拉取完成 ==="
+
+          # 2. 构建 SvelteKit 静态产物
+          npm run build
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy build --project-name=shipinku
+
+      - name: Summary
+        run: |
+          echo "## ✅ 构建部署完成" >> $GITHUB_STEP_SUMMARY
+          echo "- **时间**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "- **触发**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **缓存策略**: HTML 12小时死缓存" >> $GITHUB_STEP_SUMMARY
+          echo "- **下次构建**: 12小时后" >> $GITHUB_STEP_SUMMARY
