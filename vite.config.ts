@@ -25,15 +25,8 @@ export default defineConfig({
 		},
 		// 启用 CSS 代码分割
 		cssCodeSplit: true,
-		// 优化压缩
-		minify: 'terser',
-		terserOptions: {
-			compress: {
-				drop_console: true,
-				drop_debugger: true,
-				pure_funcs: ['console.log', 'console.info']
-			}
-		},
+		// 使用 esbuild 压缩（Vite 内置，无需额外安装）
+		minify: 'esbuild',
 		// 报告压缩后大小
 		reportCompressedSize: true
 	},
