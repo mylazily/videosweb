@@ -6,7 +6,6 @@
 	 */
 	import type { Video, Comment, Danmaku, PlayLine, Episode } from '$lib/types';
 	import { formatPlayCount, formatRating, setPageTitle } from '$lib/utils';
-	import VideoPlayer from '$components/VideoPlayer.svelte';
 	import P2PVideoPlayer from '$components/P2PVideoPlayer.svelte';
 	import DanmakuLayer from '$components/DanmakuLayer.svelte';
 	import SourceSwitcher from '$components/SourceSwitcher.svelte';

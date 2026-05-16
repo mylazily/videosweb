@@ -17,8 +17,8 @@ export {
 	switchDomain,
 	getBaseUrl,
 	getDomains,
-	isChecking,
-	isInitialized
+	getIsChecking,
+	getIsInitialized
 } from './stores/apiConfigStore';
 
 // 导出域名轮询模块

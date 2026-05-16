@@ -10,7 +10,7 @@
 	let rankItems = $state<RankItem[]>(data.rankItems || []);
 
 	function handleItemClick(videoId: string) {
-		window.location.href = `/video/${videoId}`;
+		window.location.href = `/v/${videoId}`;
 	}
 </script>
 

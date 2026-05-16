@@ -120,7 +120,7 @@
 		<!-- 推荐视频网格 -->
 		<div class="grid grid-cols-2 gap-3">
 			{#each videos as video (video.id)}
-				<a href="/video/{video.id}" class="card block">
+				<a href="/v/{video.id}" class="card block">
 					<div class="cover-16-9">
 						<img
 							src={video.cover}

@@ -63,7 +63,7 @@
 		<!-- 历史列表 -->
 		<div class="space-y-3">
 			{#each history as item (item.id)}
-				<a href="/video/{item.video_id}" class="flex gap-3 p-2 rounded-lg bg-white dark:bg-dark-card card">
+				<a href="/v/{item.video_id}" class="flex gap-3 p-2 rounded-lg bg-white dark:bg-dark-card card">
 					<!-- 封面 -->
 					<div class="cover-16-9 w-[130px] flex-shrink-0 rounded">
 						<img

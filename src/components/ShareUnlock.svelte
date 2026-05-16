@@ -25,7 +25,7 @@
 	let sharing = $state(false);
 
 	// 分享链接
-	const shareUrl = $derived(shareData?.url || `${window.location.origin}/video/${videoId}`);
+	const shareUrl = $derived(shareData?.url || `${window.location.origin}/v/${videoId}`);
 	const unlockCount = $derived(shareData?.unlock_count || 0);
 	const maxUnlock = $derived(shareData?.max_unlock || 5);
 	const progress = $derived(Math.min((unlockCount / maxUnlock) * 100, 100));

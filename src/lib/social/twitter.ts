@@ -15,7 +15,7 @@ export function generateShareText(video: Video): string {
 	const title = video.title;
 	const tags = video.tags.slice(0, 3).map(t => `#${t}`).join(' ');
 	const rating = video.rating > 0 ? ` 评分 ${video.rating}` : '';
-	const url = `${SITE_BASE_URL}/video/${video.id}`;
+	const url = `${SITE_BASE_URL}/v/${video.id}`;
 
 	return `${title}${rating}\n${tags}\n${url}`;
 }
@@ -28,7 +28,7 @@ export function generateShareText(video: Video): string {
 export function getTwitterShareURL(video: Video): string {
 	const text = generateShareText(video);
 	const encodedText = encodeURIComponent(text);
-	const encodedUrl = encodeURIComponent(`${SITE_BASE_URL}/video/${video.id}`);
+	const encodedUrl = encodeURIComponent(`${SITE_BASE_URL}/v/${video.id}`);
 
 	return `https://x.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`;
 }
@@ -41,7 +41,7 @@ export function getTwitterShareURL(video: Video): string {
 export function getTelegramShareURL(video: Video): string {
 	const text = generateShareText(video);
 	const encodedText = encodeURIComponent(text);
-	const encodedUrl = encodeURIComponent(`${SITE_BASE_URL}/video/${video.id}`);
+	const encodedUrl = encodeURIComponent(`${SITE_BASE_URL}/v/${video.id}`);
 
 	return `https://t.me/share/url?url=${encodedUrl}&text=${encodedText}`;
 }
@@ -52,7 +52,7 @@ export function getTelegramShareURL(video: Video): string {
  * @returns 是否复制成功
  */
 export async function copyShareLink(video: Video): Promise<boolean> {
-	const url = `${SITE_BASE_URL}/video/${video.id}`;
+	const url = `${SITE_BASE_URL}/v/${video.id}`;
 
 	try {
 		if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -81,7 +81,7 @@ export async function copyShareLink(video: Video): Promise<boolean> {
  * @returns 分享链接
  */
 export function getWechatShareURL(video: Video): string {
-	return `${SITE_BASE_URL}/video/${video.id}`;
+	return `${SITE_BASE_URL}/v/${video.id}`;
 }
 
 /**
@@ -99,8 +99,8 @@ export function getShareURL(video: Video, platform: 'twitter' | 'telegram' | 'we
 		case 'wechat':
 			return getWechatShareURL(video);
 		case 'link':
-			return `${SITE_BASE_URL}/video/${video.id}`;
+			return `${SITE_BASE_URL}/v/${video.id}`;
 		default:
-			return `${SITE_BASE_URL}/video/${video.id}`;
+			return `${SITE_BASE_URL}/v/${video.id}`;
 	}
 }

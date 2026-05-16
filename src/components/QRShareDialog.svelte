@@ -28,7 +28,7 @@
 	// 生成 QR 码
 	$effect(() => {
 		const domain = getActiveDomain();
-		shareUrl = `${domain}/video/${video.id}`;
+		shareUrl = `${domain}/v/${video.id}`;
 		qrSvg = generateQRCode(shareUrl, 200, {
 			fgColor: THEME.PRIMARY,
 			bgColor: '#FFFFFF'

@@ -23,7 +23,7 @@
 	}: Props = $props();
 </script>
 
-<a href="/video/{video.id}" class="card block">
+<a href="/v/{video.id}" class="card block">
 	{#if horizontal}
 		<!-- 横向卡片 -->
 		<div class="flex gap-3 p-2">

@@ -22,8 +22,8 @@ export function generateVideoSchema(video: Video): Record<string, unknown> {
 		'thumbnailUrl': video.cover,
 		'uploadDate': video.update_time,
 		'duration': formatDurationISO(video.sources),
-		'contentUrl': `${SITE_BASE_URL}/video/${video.id}`,
-		'embedUrl': `${SITE_BASE_URL}/video/${video.id}`,
+		'contentUrl': `${SITE_BASE_URL}/v/${video.id}`,
+		'embedUrl': `${SITE_BASE_URL}/v/${video.id}`,
 		'author': {
 			'@type': 'Organization',
 			'name': 'XVideos 影视'
@@ -101,7 +101,7 @@ export function generateArticleSchema(tag: Tag, videos?: Video[]): Record<string
 					'@type': 'VideoObject',
 					'name': video.title,
 					'thumbnailUrl': video.cover,
-					'url': `${SITE_BASE_URL}/video/${video.id}`
+					'url': `${SITE_BASE_URL}/v/${video.id}`
 				}
 			}))
 		};
