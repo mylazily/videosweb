@@ -108,6 +108,7 @@ function fetchWithTimeout(url, options = {}, timeout = API_TIMEOUT) {
 
 /**
  * 检查 API 域名是否可用
+ * @returns 延迟时间（毫秒），失败返回 0
  */
 async function checkDomain(domain) {
 	// 先检查缓存
@@ -115,51 +116,71 @@ async function checkDomain(domain) {
 		const cached = domainHealthCache.get(domain);
 		// 缓存有效期 5 分钟
 		if (Date.now() - cached.checkedAt < 5 * 60 * 1000) {
-			return cached.isAlive;
+			return cached.latency;
 		}
 	}
 
 	try {
+		const startTime = Date.now();
 		const response = await fetchWithTimeout(
 			`${domain}/api/health`,
 			{ method: 'GET', mode: 'cors' },
 			3000
 		);
-		const isAlive = response.ok;
-		domainHealthCache.set(domain, { isAlive, checkedAt: Date.now() });
-		return isAlive;
+		const latency = response.ok ? Date.now() - startTime : 0;
+		domainHealthCache.set(domain, { latency, checkedAt: Date.now() });
+		return latency;
 	} catch {
-		domainHealthCache.set(domain, { isAlive: false, checkedAt: Date.now() });
-		return false;
+		domainHealthCache.set(domain, { latency: 0, checkedAt: Date.now() });
+		return 0;
 	}
 }
 
 /**
- * 探测可用 API 域名
+ * 探测可用 API 域名（并行探测，返回最快的）
  */
 async function findActiveDomain() {
-	console.log('[SW] 探测可用 API 域名...');
+	console.log('[SW] 并行探测可用 API 域名...');
 
-	for (const domain of FALLBACK_DOMAINS) {
-		if (await checkDomain(domain)) {
-			currentApiDomain = domain;
-			console.log('[SW] 找到可用域名:', domain);
+	try {
+		// 并行检查所有域名，使用 Promise.allSettled 返回第一个成功的
+		const results = await Promise.allSettled(
+			FALLBACK_DOMAINS.map(async (domain) => {
+				const latency = await checkDomain(domain);
+				return { domain, latency, alive: latency > 0 };
+			})
+		);
 
-			// 通知所有客户端更新域名
-			const clients = await self.clients.matchAll();
-			clients.forEach((client) => {
-				client.postMessage({
-					type: 'API_DOMAIN_UPDATE',
-					domain: domain
-				});
-			});
+		// 找到延迟最低的可用域名
+		let bestDomain = FALLBACK_DOMAINS[0];
+		let bestLatency = Infinity;
 
-			return domain;
+		for (const result of results) {
+			if (result.status === 'fulfilled' && result.value.alive) {
+				if (result.value.latency < bestLatency) {
+					bestLatency = result.value.latency;
+					bestDomain = result.value.domain;
+				}
+			}
 		}
-	}
 
-	console.warn('[SW] 未找到可用域名，使用默认域名');
-	return FALLBACK_DOMAINS[0];
+		currentApiDomain = bestDomain;
+		console.log('[SW] 最优域名:', bestDomain, `(延迟: ${bestLatency}ms)`);
+
+		// 通知所有客户端更新域名
+		const clients = await self.clients.matchAll();
+		clients.forEach((client) => {
+			client.postMessage({
+				type: 'API_DOMAIN_UPDATE',
+				domain: bestDomain
+			});
+		});
+
+		return bestDomain;
+	} catch {
+		console.warn('[SW] 域名探测失败，使用默认域名');
+		return FALLBACK_DOMAINS[0];
+	}
 }
 
 /**
@@ -790,7 +811,7 @@ self.addEventListener('sync', (event) => {
 
 // ========== 定期探活 ==========
 
-// 每 5 分钟检查一次 API 域名
+// 定期探活（使用 setInterval，SW 可能在空闲时被终止，但 activate 和 sync 事件也会触发）
 setInterval(() => {
 	findActiveDomain();
 }, 5 * 60 * 1000);

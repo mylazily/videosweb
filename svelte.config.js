@@ -13,10 +13,14 @@ const config = {
 			precompress: true,
 			strict: true
 		}),
-		// 预渲染配置：通配所有页面 + 热点标签页
+		// 预渲染配置：仅预渲染静态页面，避免动态路由预渲染失败
 		prerender: {
 			entries: [
-				'*',
+				'/',
+				'/short',
+				'/rank',
+				'/tags',
+				'/category',
 				'/tags/action',
 				'/tags/comedy',
 				'/tags/romance',

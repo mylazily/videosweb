@@ -9,12 +9,32 @@ import {
 	DOMAIN_HEALTH_CHECK_INTERVAL,
 	DOMAIN_SWITCH_TIMEOUT,
 	DOMAIN_ROTATION_PATH,
-	FALLBACK_DOMAINS
+	FALLBACK_DOMAINS,
+	DOMAIN_GIST_URL
 } from '$lib/constants';
 import { getBaseUrl, switchDomain as apiSwitchDomain } from '$lib/apiConfig';
 import { reportDomainSwitch } from '$lib/api';
 
 // ========== 事件监听器 ==========
+
+/**
+ * 从 GitHub Gist 拉取动态域名列表
+ */
+async function fetchDomainsFromGist(): Promise<string[]> {
+	try {
+		const response = await fetch(DOMAIN_GIST_URL, {
+			signal: AbortSignal.timeout(3000)
+		});
+		if (!response.ok) return [];
+		const data = await response.json();
+		if (Array.isArray(data) && data.length > 0) {
+			return data.filter((url: string) => url.startsWith('http'));
+		}
+		return [];
+	} catch {
+		return [];
+	}
+}
 
 type DomainSwitchCallback = (event: DomainSwitchEvent) => void;
 
@@ -128,17 +148,29 @@ export async function switchDomain(
 
 /**
  * 自动选择最优域名
- * 从备用域名中选择延迟最低的可用域名
+ * 优先从 Gist 获取动态域名，然后从备用域名中选择延迟最低的可用域名
  */
 export async function autoSelectBestDomain(): Promise<string | null> {
+	// 1. 尝试从 Gist 获取动态域名
+	let allDomains = [...FALLBACK_DOMAINS];
+	try {
+		const gistDomains = await fetchDomainsFromGist();
+		if (gistDomains.length > 0) {
+			allDomains = [...gistDomains, ...FALLBACK_DOMAINS];
+		}
+	} catch {
+		// Gist 不可用，使用硬编码域名
+	}
+
+	// 2. 并行检查所有域名
 	const results = await Promise.allSettled(
-		FALLBACK_DOMAINS.map(async (domain) => {
+		allDomains.map(async (domain) => {
 			const latency = await checkDomainHealth(domain);
 			return { domain, latency };
 		})
 	);
 
-	// 找到延迟最低的可用域名
+	// 3. 找到延迟最低的可用域名
 	let bestDomain: string | null = null;
 	let bestLatency = Infinity;
 

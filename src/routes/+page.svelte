@@ -12,6 +12,7 @@
 	import PullRefresh from '$components/PullRefresh.svelte';
 	import SkeletonCard from '$components/SkeletonCard.svelte';
 	import WaterfallGrid from '$components/WaterfallGrid.svelte';
+	import { getBaseUrl } from '$lib/apiConfig';
 
 	let { data } = $props();
 
@@ -25,6 +26,17 @@
 
 	// 自动轮播
 	let bannerTimer: ReturnType<typeof setInterval>;
+
+	/** 基于 video id 的确定性哈希函数，避免 Math.random() 导致布局闪烁 */
+	function hashCode(str: string): number {
+		let hash = 0;
+		for (let i = 0; i < str.length; i++) {
+			const char = str.charCodeAt(i);
+			hash = ((hash << 5) - hash) + char;
+			hash |= 0;
+		}
+		return Math.abs(hash);
+	}
 
 	function startBannerTimer() {
 		stopBannerTimer();
@@ -40,9 +52,33 @@
 	// 下拉刷新
 	async function handleRefresh() {
 		loading = true;
-		// 模拟刷新
-		await new Promise((resolve) => setTimeout(resolve, 1000));
-		loading = false;
+		try {
+			const base = getBaseUrl();
+			const [bannerRes, hotRes, latestRes] = await Promise.allSettled([
+				fetch(`${base}/api/home/banner`),
+				fetch(`${base}/api/video/hot?page=1&page_size=10`),
+				fetch(`${base}/api/video/latest?page=1&page_size=10`)
+			]);
+
+			if (bannerRes.status === 'fulfilled' && bannerRes.value.ok) {
+				const data = await bannerRes.value.json();
+				banners = data.data || data.banners || [];
+			}
+			if (hotRes.status === 'fulfilled' && hotRes.value.ok) {
+				const data = await hotRes.value.json();
+				const hotVideos = data.data?.list || data.data || [];
+				allVideos = [...hotVideos];
+			}
+			if (latestRes.status === 'fulfilled' && latestRes.value.ok) {
+				const data = await latestRes.value.json();
+				const latestVideos = data.data?.list || data.data || [];
+				allVideos = [...allVideos, ...latestVideos];
+			}
+		} catch {
+			// Refresh failed, keep existing data
+		} finally {
+			loading = false;
+		}
 	}
 
 	// 加载更多
@@ -52,34 +88,19 @@
 		currentPage++;
 
 		try {
-			// 模拟加载更多数据
-			await new Promise((resolve) => setTimeout(resolve, 800));
+			const base = getBaseUrl();
+			const response = await fetch(`${base}/api/video/hot?page=${currentPage}&page_size=10`);
+			if (!response.ok) throw new Error('Failed to load');
+			const data = await response.json();
+			const newVideos: Video[] = data.data?.list || data.data || [];
 
-			// 如果是模拟数据，生成一些假视频
-			if (allVideos.length < 50) {
-				const newVideos: Video[] = Array.from({ length: 10 }, (_, i) => ({
-					id: `more_${currentPage}_${i}`,
-					title: `推荐视频 ${allVideos.length + i + 1}`,
-					cover: `https://picsum.photos/300/400?random=${allVideos.length + i}`,
-					description: '这是一部精彩的影视作品',
-					director: '导演',
-					actors: ['演员1', '演员2'],
-					year: 2024,
-					area: '中国',
-					category: ['电影', '电视剧', '动漫', '综艺'][Math.floor(Math.random() * 4)],
-					tags: ['热门', '推荐'],
-					rating: Math.round((7 + Math.random() * 3) * 10) / 10,
-					play_count: Math.floor(Math.random() * 100000),
-					comment_count: Math.floor(Math.random() * 1000),
-					update_time: '2024-01-01',
-					sources: []
-				}));
+			if (newVideos.length > 0) {
 				allVideos = [...allVideos, ...newVideos];
 			} else {
 				hasMore = false;
 			}
 		} catch {
-			// 加载失败
+			hasMore = false;
 		} finally {
 			loading = false;
 		}
@@ -178,7 +199,7 @@
 									src={video.cover}
 									alt={video.title}
 									class="w-full object-cover"
-									style="height: {150 + Math.floor(Math.random() * 100)}px;"
+									style="height: {150 + (hashCode(video.id) % 100)}px;"
 									referrerpolicy="no-referrer"
 									loading="lazy"
 								/>

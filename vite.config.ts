@@ -14,13 +14,11 @@ export default defineConfig({
 			output: {
 				// 手动分割第三方依赖
 				manualChunks: {
-					// hls.js 单独分包（较大）
-					'hls': ['hls.js'],
-					// Svelte 运行时
-					'svelte-vendor': ['svelte'],
-					// 其他第三方库
-					'vendor': []
-				}
+				// hls.js 单独分包（较大）
+				'hls': ['hls.js'],
+				// Svelte 运行时
+				'svelte-vendor': ['svelte', 'svelte/internal']
+			}
 			}
 		}
 	},

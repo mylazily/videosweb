@@ -236,14 +236,14 @@ export function getDomains(): ApiDomain[] {
 /**
  * 获取检测状态
  */
-export function isChecking(): boolean {
+export function getIsChecking(): boolean {
 	return isChecking;
 }
 
 /**
  * 是否已初始化
  */
-export function isInitialized(): boolean {
+export function getIsInitialized(): boolean {
 	return isInitialized;
 }
 

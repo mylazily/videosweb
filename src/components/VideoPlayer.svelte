@@ -11,13 +11,10 @@
 	 * - Svelte 5 runes ($state, $effect, $props, $derived)
 	 */
 	import { onMount, onDestroy } from 'svelte';
-	import Hls from 'hls.js';
 	import { decryptPlayUrl } from '$lib/crypto';
 	import { formatDuration } from '$lib/utils';
 	import { PLAYER_CONFIG } from '$lib/constants';
 	import type { PlayLine, PlayerState, PlayerCallbacks } from '$lib/types';
-	import { getDanmakuWS } from '$lib/danmaku/websocket';
-	import type { DanmakuWS } from '$lib/danmaku/websocket';
 
 	// ========== Props ==========
 
@@ -48,7 +45,7 @@
 	// ========== 播放器状态 ==========
 
 	let videoEl: HTMLVideoElement | null = $state(null);
-	let hlsInstance: Hls | null = $state(null);
+	let hlsInstance: any = null;
 	let currentLineIndex = $state(0);
 	let playerState = $state<PlayerState>('idle');
 	let errorMessage = $state('');
@@ -80,7 +77,7 @@
 	let isDestroyed = false;
 
 	// WebSocket 弹幕连接
-	let danmakuWS: DanmakuWS | null = null;
+	let danmakuWS: any = null;
 
 	// 容灾常量
 	const MAX_RETRY_PER_LINE = 2;     // 每条线路最多重试次数
@@ -98,10 +95,15 @@
 	// ========== WebSocket 弹幕 ==========
 
 	/** 连接弹幕 WebSocket */
-	function connectDanmakuWS(): void {
-		if (!videoId) return;
-		danmakuWS = getDanmakuWS();
-		danmakuWS.connect(videoId);
+	async function connectDanmakuWS(): Promise<void> {
+		if (!videoId || typeof window === 'undefined') return;
+		try {
+			const { getDanmakuWS } = await import('$lib/danmaku/websocket');
+			danmakuWS = getDanmakuWS();
+			danmakuWS.connect(videoId);
+		} catch {
+			// danmaku module not available
+		}
 	}
 
 	/** 断开弹幕 WebSocket */
@@ -133,7 +135,7 @@
 	 * 初始化/切换播放器
 	 * @param lineIndex 线路索引
 	 */
-	function initPlayer(lineIndex: number): void {
+	async function initPlayer(lineIndex: number): Promise<void> {
 		if (!videoEl || isDestroyed) return;
 
 		const line = playLines[lineIndex];
@@ -171,8 +173,12 @@
 		}, LOAD_TIMEOUT_MS);
 
 		try {
+			// Dynamic check for HLS support
+			const HlsModule = await import('hls.js');
+			const Hls = HlsModule.default;
+
 			if (Hls.isSupported() && playUrl.includes('.m3u8')) {
-				initHlsPlayer(playUrl);
+				await initHlsPlayer(playUrl);
 			} else if (videoEl.canPlayType('application/vnd.apple.mpegurl')) {
 				initNativeHlsPlayer(playUrl);
 			} else {
@@ -187,8 +193,18 @@
 	/**
 	 * 初始化 hls.js 播放器
 	 */
-	function initHlsPlayer(playUrl: string): void {
+	async function initHlsPlayer(playUrl: string): Promise<void> {
 		if (!videoEl || isDestroyed) return;
+
+		// Dynamic import to avoid SSR crash
+		const HlsModule = await import('hls.js');
+		const Hls = HlsModule.default;
+
+		if (!Hls.isSupported()) {
+			// Try native HLS
+			initNativeHlsPlayer(playUrl);
+			return;
+		}
 
 		const hls = new Hls({
 			maxBufferLength: PLAYER_CONFIG.MAX_BUFFER_LENGTH,
@@ -391,7 +407,7 @@
 		destroyPlayer();
 
 		// 用新域名重新初始化
-		setTimeout(() => {
+		setTimeout(async () => {
 			if (!isDestroyed && videoEl) {
 				errorMessage = '';
 				isLoading = true;
@@ -408,8 +424,12 @@
 				}, LOAD_TIMEOUT_MS);
 
 				try {
+					// Dynamic check for HLS support
+					const HlsModule = await import('hls.js');
+					const Hls = HlsModule.default;
+
 					if (Hls.isSupported()) {
-						initHlsPlayer(newUrl);
+						await initHlsPlayer(newUrl);
 					} else if (videoEl.canPlayType('application/vnd.apple.mpegurl')) {
 						initNativeHlsPlayer(newUrl);
 					} else {
