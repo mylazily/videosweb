@@ -11,6 +11,7 @@
   }
 
   let { video }: Props = $props();
+  let loaded = $state(false);
 
   function formatCount(n: number): string {
     if (n >= 10000) return (n / 10000).toFixed(1) + 'w';
@@ -19,14 +20,20 @@
   }
 </script>
 
-<a href="/v/{video.id}" class="block bg-white rounded-xl overflow-hidden shadow-sm">
-  <div class="relative aspect-[3/4]">
+<a href="/v/{video.id}" class="block bg-white rounded-xl overflow-hidden shadow-sm press">
+  <div class="relative aspect-[3/4] bg-gray-100">
+    <!-- 加载占位 -->
+    {#if !loaded}
+      <div class="absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 animate-pulse"></div>
+    {/if}
     <img
       src={video.cover}
       alt={video.title}
       loading="lazy"
       referrerpolicy="no-referrer"
-      class="w-full h-full object-cover"
+      class="w-full h-full object-cover transition-opacity duration-300"
+      class:opacity-0={!loaded}
+      onload={() => loaded = true}
     />
     <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
     <div class="absolute bottom-2 left-2 right-2 flex items-center justify-between text-white text-xs">
