@@ -75,6 +75,7 @@
 	let loadTimeoutTimer: ReturnType<typeof setTimeout> | null = null;
 	let toastTimer: ReturnType<typeof setTimeout> | null = null;
 	let isDestroyed = false;
+	let timeoutIds: number[] = []; // 存储所有setTimeout ID用于清理
 
 	// WebSocket 弹幕连接
 	let danmakuWS: any = null;
@@ -332,11 +333,12 @@
 			showToast(`连接不稳定，正在重试 (${retryCount}/${MAX_RETRY_PER_LINE})...`);
 
 			// 短暂延迟后重试
-			setTimeout(() => {
+			const retryTimeoutId = window.setTimeout(() => {
 				if (!isDestroyed) {
 					initPlayer(currentLineIndex);
 				}
 			}, 1000);
+			timeoutIds.push(retryTimeoutId);
 			return;
 		}
 
@@ -357,11 +359,12 @@
 
 			// 延迟切换，给用户看到提示
 			playerState = 'switching';
-			setTimeout(() => {
+			const switchTimeoutId = window.setTimeout(() => {
 				if (!isDestroyed) {
 					initPlayer(nextLineIndex);
 				}
 			}, 800);
+			timeoutIds.push(switchTimeoutId);
 		} else {
 			// 所有线路都失败
 			// 尝试域名池切换
@@ -404,7 +407,7 @@
 		destroyPlayer();
 
 		// 用新域名重新初始化
-		setTimeout(async () => {
+		const domainSwitchTimeoutId = window.setTimeout(async () => {
 			if (!isDestroyed && videoEl) {
 				errorMessage = '';
 				isLoading = true;
@@ -439,6 +442,7 @@
 				}
 			}
 		}, 500);
+		timeoutIds.push(domainSwitchTimeoutId);
 	}
 
 	/**
@@ -475,11 +479,12 @@
 
 		// 切换播放器
 		playerState = 'switching';
-		setTimeout(() => {
+		const manualSwitchTimeoutId = window.setTimeout(() => {
 			if (!isDestroyed) {
 				initPlayer(index);
 			}
 		}, 300);
+		timeoutIds.push(manualSwitchTimeoutId);
 	}
 
 	/**
@@ -655,6 +660,10 @@
 	onDestroy(() => {
 		isDestroyed = true;
 		destroyPlayer();
+
+		// 清理所有setTimeout
+		timeoutIds.forEach(id => clearTimeout(id));
+		timeoutIds = [];
 
 		if (hideControlsTimer) {
 			clearTimeout(hideControlsTimer);

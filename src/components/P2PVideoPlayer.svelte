@@ -95,6 +95,7 @@
 	let statsTimer: ReturnType<typeof setInterval> | null = null;
 	let bufferOptimizeTimer: ReturnType<typeof setInterval> | null = null;
 	let isDestroyed = false;
+	let timeoutIds: number[] = []; // 存储所有setTimeout ID用于清理
 
 	// 内部实例引用（不使用 $state，避免不必要的响应式开销）
 	let hlsInstance: HlsType | null = null;
@@ -591,9 +592,10 @@
 
 		if (retryCount <= MAX_RETRY_PER_LINE) {
 			showToast(`连接不稳定，正在重试 (${retryCount}/${MAX_RETRY_PER_LINE})...`);
-			setTimeout(() => {
+			const retryTimeoutId = window.setTimeout(() => {
 				if (!isDestroyed) initPlayer(currentLineIndex);
 			}, 1000);
+			timeoutIds.push(retryTimeoutId);
 			return;
 		}
 
@@ -611,9 +613,10 @@
 			onLineChange?.(nextLineIndex);
 
 			playerState = 'switching';
-			setTimeout(() => {
+			const switchTimeoutId = window.setTimeout(() => {
 				if (!isDestroyed) initPlayer(nextLineIndex);
 			}, 800);
+			timeoutIds.push(switchTimeoutId);
 		} else {
 			// 尝试域名池切换
 			if (domainPool.length > 0 && sharedPath) {
@@ -642,7 +645,7 @@
 		playerState = 'switching';
 		destroyPlayer();
 
-		setTimeout(async () => {
+		const domainSwitchTimeoutId = window.setTimeout(async () => {
 			if (!isDestroyed && videoEl) {
 				errorMessage = '';
 				isLoading = true;
@@ -684,6 +687,7 @@
 				}
 			}
 		}, 500);
+		timeoutIds.push(domainSwitchTimeoutId);
 	}
 
 	/**
@@ -714,9 +718,10 @@
 		onLineChange?.(index);
 
 		playerState = 'switching';
-		setTimeout(() => {
+		const manualSwitchTimeoutId = window.setTimeout(() => {
 			if (!isDestroyed) initPlayer(index);
 		}, 300);
+		timeoutIds.push(manualSwitchTimeoutId);
 	}
 
 	/**
@@ -876,6 +881,9 @@
 	onDestroy(() => {
 		isDestroyed = true;
 		destroyPlayer();
+		// 清理所有setTimeout
+		timeoutIds.forEach(id => clearTimeout(id));
+		timeoutIds = [];
 		if (hideControlsTimer) clearTimeout(hideControlsTimer);
 		if (toastTimer) clearTimeout(toastTimer);
 	});
