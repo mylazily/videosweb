@@ -76,7 +76,7 @@ export async function checkDomainHealth(domain: string): Promise<number> {
 		const controller = new AbortController();
 		const timer = setTimeout(() => controller.abort(), 2000);
 
-		const response = await fetch(`${domain}/api/health`, {
+		const response = await fetch(`${domain}/api/v1/health`, {
 			method: 'GET',
 			signal: controller.signal,
 			mode: 'cors',
