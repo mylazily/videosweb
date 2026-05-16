@@ -6,15 +6,21 @@
 	 */
 	import type { Video, Comment, Danmaku, PlayLine, Episode } from '$lib/types';
 	import { formatPlayCount, formatRating, setPageTitle } from '$lib/utils';
-	import VideoPlayer from '$components/VideoPlayer.svelte';
-	import P2PVideoPlayer from '$components/P2PVideoPlayer.svelte';
 	import DanmakuLayer from '$components/DanmakuLayer.svelte';
 	import SourceSwitcher from '$components/SourceSwitcher.svelte';
 	import EpisodeList from '$components/EpisodeList.svelte';
 	import CommentList from '$components/CommentList.svelte';
 	import CommentInput from '$components/CommentInput.svelte';
+	import { onMount } from 'svelte';
 
 	let { data } = $props();
+
+	// 动态导入播放器（避免 hls.js 打包进首页）
+	let P2PVideoPlayer: any = null;
+	onMount(async () => {
+		const mod = await import('$components/P2PVideoPlayer.svelte');
+		P2PVideoPlayer = mod.default;
+	});
 
 	// 视频数据（处理null情况）
 	let video = $state<Video | null>(data.video);
@@ -157,6 +163,7 @@
 	{:else}
 		<!-- 视频播放器 + 弹幕层 -->
 		<div class="relative">
+			{#if P2PVideoPlayer}
 			<P2PVideoPlayer
 				{playLines}
 				{domainPool}
@@ -165,6 +172,7 @@
 				onLineChange={handleLineChange}
 				onTimeUpdate={(time: number) => handleTimeUpdate(time, 0)}
 			/>
+			{/if}
 			<DanmakuLayer
 				danmakus={danmakus}
 				onSend={handleSendDanmaku}

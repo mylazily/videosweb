@@ -4,79 +4,14 @@
 		<meta charset="utf-8" />
 		<link rel="icon" href="%sveltekit.assets%/icons/icon-192.png" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-		<meta name="description" content="XVideos 影视 - 高清影视在线观看" />
+		<meta name="description" content="影视 - 高清在线观看" />
 		<meta name="theme-color" content="#FF6B9D" />
 		<meta name="apple-mobile-web-app-capable" content="yes" />
-		<meta name="apple-mobile-web-app-status-bar-style" content="default" />
-
-		<!-- DNS预解析 -->
 		<link rel="dns-prefetch" href="https://9901.555554.xyz" />
 		<link rel="preconnect" href="https://9901.555554.xyz" crossorigin />
-
-		<!-- 内联关键CSS - 首屏骨架屏秒出 -->
-		<style>
-			*{box-sizing:border-box;margin:0;padding:0}
-			body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#FAFAFA;color:#1A1A1A;-webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased}
-			.header{position:fixed;top:0;left:0;right:0;z-index:50;height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;background:rgba(255,255,255,0.95);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
-			.header .logo{display:flex;align-items:center;gap:8px}
-			.header .logo-icon{width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#FF6B9D,#FF8FB3);display:flex;align-items:center;justify-content:center}
-			.header .logo-text{font-size:18px;font-weight:700}
-			.header .search-btn{width:36px;height:36px;border-radius:50%;background:#F0F0F0;display:flex;align-items:center;justify-content:center}
-			.tabs{position:fixed;top:48px;left:0;right:0;z-index:40;height:44px;display:flex;align-items:center;gap:4px;padding:0 12px;background:#FAFAFA;border-bottom:1px solid #F0F0F0;overflow:hidden}
-			.tab{width:52px;height:28px;border-radius:14px;background:#F0F0F0;flex-shrink:0}
-			.content{padding:12px 12px 80px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
-			.card{border-radius:12px;overflow:hidden;background:#fff}
-			.card .cover{width:100%;aspect-ratio:3/4;background:linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%);background-size:200% 100%;animation:shimmer 1.5s infinite}
-			.card .info{padding:8px}
-			.card .title{height:16px;border-radius:4px;background:linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;margin-bottom:6px}
-			.card .sub{height:12px;width:60%;border-radius:4px;background:#f5f5f5}
-			@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
-			#app-shell.hidden{display:none}
-		</style>
-
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">
-		<!-- 内联骨架屏 - HTML直出，零JS即可显示 -->
-		<div id="app-shell">
-			<div class="header">
-				<div class="logo">
-					<div class="logo-icon">
-						<svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
-					</div>
-					<span class="logo-text">影视</span>
-				</div>
-				<div class="search-btn">
-					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-				</div>
-			</div>
-			<div class="tabs">
-				<div class="tab"></div><div class="tab"></div><div class="tab"></div><div class="tab"></div><div class="tab"></div><div class="tab"></div>
-			</div>
-			<div class="content">
-				<div class="card"><div class="cover"></div><div class="info"><div class="title"></div><div class="sub"></div></div></div>
-				<div class="card"><div class="cover"></div><div class="info"><div class="title"></div><div class="sub"></div></div></div>
-				<div class="card"><div class="cover"></div><div class="info"><div class="title"></div><div class="sub"></div></div></div>
-				<div class="card"><div class="cover"></div><div class="info"><div class="title"></div><div class="sub"></div></div></div>
-				<div class="card"><div class="cover"></div><div class="info"><div class="title"></div><div class="sub"></div></div></div>
-				<div class="card"><div class="cover"></div><div class="info"><div class="title"></div><div class="sub"></div></div></div>
-			</div>
-		</div>
-
 		<div style="display: contents">%sveltekit.body%</div>
-
-		<script>
-			// SvelteKit 启动后隐藏骨架屏
-			const shell = document.getElementById('app-shell');
-			const hide = () => { shell.classList.add('hidden'); };
-			const observer = new MutationObserver(() => {
-				if (document.querySelector('[data-sveltekit-hydrated]') || document.querySelector('header[class*="fixed"]')) {
-					hide();
-					observer.disconnect();
-				}
-			});
-			observer.observe(document.body, { childList: true, subtree: true });
-			setTimeout(() => { hide(); observer.disconnect(); }, 3000);
-		</script>
 	</body>
 </html>

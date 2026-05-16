@@ -8,32 +8,19 @@ export default defineConfig({
 		host: true
 	},
 	build: {
-		// 代码分割优化
 		rollupOptions: {
 			output: {
-				// 手动分块策略
-				manualChunks: (id) => {
-					// 播放器相关代码单独打包（非首屏）
-					if (id.includes('hls.js') || id.includes('p2p-media-loader')) {
-						return 'player';
+				manualChunks(id) {
+					// P2P/播放器相关 - 完全隔离
+					if (id.includes('hls.js') || id.includes('p2p-media-loader') || id.includes('bittorrent') || id.includes('simple-websocket') || id.includes('wrtc') || id.includes('webtorrent')) {
+						return 'player-vendor';
 					}
-					// 工具库单独打包
-					if (id.includes('node_modules')) {
-						return 'vendor';
-					}
-				},
-				// 控制 chunk 大小
-				chunkSizeWarningLimit: 500
+				}
 			}
-		},
-		// 压缩优化
-		minify: 'esbuild',
-		target: 'es2020',
-		// 源码映射（生产环境关闭）
-		sourcemap: false
+		}
 	},
-	// 预构建优化
-	optimizeDeps: {
-		exclude: ['hls.js', 'p2p-media-loader-core', 'p2p-media-loader-hlsjs']
+	ssr: {
+		// SSR时不处理这些模块
+		noExternal: []
 	}
 });
