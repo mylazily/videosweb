@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
-
   type Video = {
     id: string | number;
     title: string;
@@ -8,7 +6,6 @@
     play_count?: number;
     duration?: number;
     author?: string;
-    category?: string;
   };
 
   let { video } = $props<{ video: Video }>();
@@ -18,7 +15,6 @@
 
   function formatCount(n: number): string {
     if (n >= 10000) return (n / 10000).toFixed(1) + '万';
-    if (n >= 1000) return (n / 1000).toFixed(1) + '千';
     return n.toString();
   }
 
@@ -29,7 +25,7 @@
   }
 </script>
 
-<a href="/v/{video.id}" class="block bg-white rounded-lg overflow-hidden">
+<a href="/v/{video.id}" class="block bg-white rounded-lg overflow-hidden active:scale-[0.98] transition-transform">
   <!-- 封面 -->
   <div class="relative aspect-video bg-gray-100">
     {#if !loaded && !error}
@@ -40,6 +36,7 @@
       src={video.cover}
       alt={video.title}
       loading="lazy"
+      decoding="async"
       onload={() => loaded = true}
       onerror={() => { error = true; loaded = true; }}
       class="w-full h-full object-cover {loaded && !error ? '' : 'hidden'}"

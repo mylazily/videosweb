@@ -9,7 +9,7 @@
   const currentPath = $derived(page.url.pathname);
   const isHome = $derived(currentPath === '/');
   const isLoggedIn = $derived(!!getToken());
-  const user = $derived(getUserInfo<{ username: string; avatar?: string }>());
+  const user = $derived(getUserInfo<{ username: string }>());
 
   const pageTitles: Record<string, string> = {
     '/search': '搜索',
@@ -25,10 +25,7 @@
 
   const title = $derived(
     pageTitles[currentPath] ||
-    (currentPath.startsWith('/v/') ? '详情' :
-     currentPath.startsWith('/video/') ? '详情' :
-     currentPath.startsWith('/category/') ? '分类' :
-     currentPath.startsWith('/short/') ? '短视频' : '')
+    (currentPath.startsWith('/v/') ? '详情' : '')
   );
 
   function handleSearch() {
@@ -36,25 +33,11 @@
       goto(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
     }
   }
-
-  function handleKeyDown(e: KeyboardEvent) {
-    if (e.key === 'Enter') handleSearch();
-  }
-
-  function goBack() {
-    if (window.history.length > 1) {
-      window.history.back();
-    } else {
-      goto('/');
-    }
-  }
 </script>
 
 {#if isHome}
-  <!-- 首页：搜索框 + 登录 -->
   <header class="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-100">
     <div class="flex items-center h-11 px-3 gap-2">
-      <!-- 搜索框 -->
       <div class="flex-1 flex items-center h-8 px-3 bg-gray-100 rounded-lg transition-all {focused ? 'ring-2 ring-pink-300 bg-white' : ''}">
         <svg class="w-4 h-4 text-gray-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="11" cy="11" r="8"/>
@@ -62,7 +45,7 @@
         </svg>
         <input
           bind:value={searchQuery}
-          onkeydown={handleKeyDown}
+          onkeydown={(e) => e.key === 'Enter' && handleSearch()}
           onfocus={() => focused = true}
           onblur={() => focused = false}
           type="text"
@@ -72,7 +55,6 @@
         />
       </div>
 
-      <!-- 用户 -->
       {#if isLoggedIn && user}
         <a href="/profile" class="w-8 h-8 rounded-full bg-pink-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
           {user.username?.charAt(0).toUpperCase() || 'U'}
@@ -83,10 +65,9 @@
     </div>
   </header>
 {:else}
-  <!-- 其他页面：返回 + 标题 -->
   <header class="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-100">
     <div class="flex items-center h-11 px-3">
-      <button onclick={goBack} class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors">
+      <button onclick={() => window.history.back()} class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors">
         <svg class="w-5 h-5 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M15 19l-7-7 7-7"/>
         </svg>
