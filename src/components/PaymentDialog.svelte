@@ -9,7 +9,6 @@
 	import { PAYMENT_POLL_INTERVAL, PAYMENT_ORDER_EXPIRE, VIP_PLANS } from '$lib/constants';
 	import { THEME } from '$lib/constants';
 	import type { PaymentChannel, PaymentOrder, VIPPlan } from '$lib/types';
-	import { hapticFeedback, isTGMiniApp } from '$lib/tg/miniapp';
 
 	interface Props {
 		/** 视频ID（可选，用于单视频解锁） */
@@ -68,7 +67,6 @@
 	 */
 	function selectPlan(plan: VIPPlan): void {
 		selectedPlan = plan;
-		if (isTGMiniApp()) hapticFeedback('light');
 		step = 'select_channel';
 	}
 
@@ -77,7 +75,6 @@
 	 */
 	function selectChannel(channel: PaymentChannel): void {
 		selectedChannel = channel;
-		if (isTGMiniApp()) hapticFeedback('light');
 		createOrder();
 	}
 
@@ -128,7 +125,6 @@
 						stopPolling();
 						payResult = 'success';
 						step = 'result';
-						if (isTGMiniApp()) hapticFeedback('success');
 						onSuccess?.();
 					} else {
 						stopPolling();

@@ -7,7 +7,6 @@
 	 */
 	import { onMount, onDestroy } from 'svelte';
 	import { AD_WATCH_DURATION } from '$lib/constants';
-	import { hapticFeedback, isTGMiniApp } from '$lib/tg/miniapp';
 
 	interface Props {
 		/** 是否为 VIP 用户 */
@@ -40,7 +39,6 @@
 		if (!canSkip && !isVIP) return;
 
 		clearTimer();
-		if (isTGMiniApp()) hapticFeedback('light');
 		onSkip?.();
 	}
 

@@ -12,13 +12,6 @@
 		import('$lib/apiConfig').then(({ checkAndActiveApi }) => {
 			checkAndActiveApi().catch(() => {});
 		});
-
-		// 初始化 Telegram Mini App
-		const { isTGMiniApp, initMiniApp, sendSessionToBackend } = await import('$lib/tg/miniapp');
-		if (isTGMiniApp()) {
-			initMiniApp();
-			sendSessionToBackend().catch(() => {});
-		}
 	});
 </script>
 

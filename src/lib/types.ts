@@ -713,50 +713,6 @@ export interface UADetectionResult {
 	raw_ua: string;
 }
 
-// ========== TG Mini App 相关 ==========
-
-/** TG 用户信息 */
-export interface TGUser {
-	id: number;
-	first_name: string;
-	last_name?: string;
-	username?: string;
-	language_code?: string;
-	photo_url?: string;
-	is_bot?: boolean;
-}
-
-/** TG Mini App 会话数据 */
-export interface TGSession {
-	user: TGUser;
-	init_data: string;
-	start_param?: string;
-	auth_date: number;
-	hash: string;
-	platform?: string;
-	theme_params?: TGThemeParams;
-}
-
-/** TG 主题参数 */
-export interface TGThemeParams {
-	bg_color?: string;
-	text_color?: string;
-	hint_color?: string;
-	link_color?: string;
-	button_color?: string;
-	button_text_color?: string;
-	secondary_bg_color?: string;
-}
-
-/** TG 频道信息 */
-export interface TGChannel {
-	id: string;
-	title: string;
-	username?: string;
-	member_count: number;
-	is_verified: boolean;
-}
-
 // ========== 支付相关 ==========
 
 /** 支付渠道 */

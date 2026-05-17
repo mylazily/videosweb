@@ -34,19 +34,6 @@ export function getTwitterShareURL(video: Video): string {
 }
 
 /**
- * 生成 Telegram 分享链接
- * @param video 视频信息
- * @returns Telegram 分享链接
- */
-export function getTelegramShareURL(video: Video): string {
-	const text = generateShareText(video);
-	const encodedText = encodeURIComponent(text);
-	const encodedUrl = encodeURIComponent(`${SITE_BASE_URL}/v/${video.id}`);
-
-	return `https://t.me/share/url?url=${encodedUrl}&text=${encodedText}`;
-}
-
-/**
  * 复制分享链接到剪贴板
  * @param video 视频信息
  * @returns 是否复制成功
@@ -90,12 +77,10 @@ export function getWechatShareURL(video: Video): string {
  * @param platform 分享平台
  * @returns 对应平台的分享链接
  */
-export function getShareURL(video: Video, platform: 'twitter' | 'telegram' | 'wechat' | 'link'): string {
+export function getShareURL(video: Video, platform: 'twitter' | 'wechat' | 'link'): string {
 	switch (platform) {
 		case 'twitter':
 			return getTwitterShareURL(video);
-		case 'telegram':
-			return getTelegramShareURL(video);
 		case 'wechat':
 			return getWechatShareURL(video);
 		case 'link':

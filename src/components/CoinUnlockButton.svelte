@@ -7,7 +7,6 @@
 	 */
 	import { adminUnlockVideo, getRewardBalance } from '$lib/api';
 	import { THEME } from '$lib/constants';
-	import { hapticFeedback, isTGMiniApp } from '$lib/tg/miniapp';
 
 	interface Props {
 		videoId: string;
@@ -54,7 +53,6 @@
 
 		if (!sufficient) {
 			showInsufficient = true;
-			if (isTGMiniApp()) hapticFeedback('error');
 			setTimeout(() => { showInsufficient = false; }, 2000);
 			return;
 		}
@@ -68,13 +66,11 @@
 				unlocked = true;
 				showSuccess = true;
 				balance = res.data.balance_after;
-				if (isTGMiniApp()) hapticFeedback('success');
 				onSuccess?.();
 
 				setTimeout(() => { showSuccess = false; }, 3000);
 			} else {
 				error = res.message || '解锁失败';
-				if (isTGMiniApp()) hapticFeedback('error');
 			}
 		} catch {
 			error = '网络错误，请稍后重试';

@@ -604,28 +604,6 @@ export function getPushStats() {
 	return get(API_PATHS.PUSH_STATS);
 }
 
-// ========== TG Bot API ==========
-
-/** TG Webhook */
-export function tgWebhook(data: unknown) {
-	return post(API_PATHS.TG_WEBHOOK, data);
-}
-
-/** 获取 TG 频道列表 */
-export function getTGChannels() {
-	return get(API_PATHS.TG_CHANNELS);
-}
-
-/** 注册 TG Mini App 会话 */
-export function registerTGMiniAppSession(data: import('./types').TGSession) {
-	return post(API_PATHS.TG_MINIAPP_SESSION, data);
-}
-
-/** 获取 TG Mini App 统计 */
-export function getTGMiniAppStats() {
-	return get(API_PATHS.TG_MINIAPP_STATS);
-}
-
 // ========== X.com API ==========
 
 /** 获取 X 账号列表 */
@@ -763,11 +741,6 @@ export function adminListRedirects() {
 /** 发送推送通知 */
 export function adminSendPush(data: { title: string; body: string; url?: string }) {
 	return post(API_PATHS.ADMIN_PUSH_SEND, data);
-}
-
-/** TG 广播 */
-export function adminTGBroadcast(data: { channel_id: string; message: string }) {
-	return post(API_PATHS.ADMIN_TG_BROADCAST, data);
 }
 
 /** 创建支付订单（管理） */

@@ -7,7 +7,6 @@
 	import { onMount } from 'svelte';
 	import { getRewardBalance, getDailyTasks, getRewardHistory, adminDailyCheckin } from '$lib/api';
 	import { THEME, CHECKIN_REWARD, AD_REWARD, SHARE_REWARD, INVITE_REWARD } from '$lib/constants';
-	import { hapticFeedback, isTGMiniApp } from '$lib/tg/miniapp';
 	import type { AdTask, CoinTransaction } from '$lib/types';
 
 	interface Props {
@@ -95,7 +94,6 @@
 				tasks = tasks.map(t =>
 					t.type === 'checkin' ? { ...t, is_completed: true, completed_count: 1 } : t
 				);
-				if (isTGMiniApp()) hapticFeedback('success');
 			}
 		} catch {
 			// 忽略

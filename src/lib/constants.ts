@@ -100,12 +100,6 @@ export const API_PATHS = {
 	PUSH_UNSUBSCRIBE: '/api/v1/push/subscribe',
 	PUSH_STATS: '/api/v1/push/stats',
 
-	// ========== TG Bot（公开） ==========
-	TG_WEBHOOK: '/api/v1/tg/webhook',
-	TG_CHANNELS: '/api/v1/tg/channels',
-	TG_MINIAPP_SESSION: '/api/v1/tg/miniapp/session',
-	TG_MINIAPP_STATS: '/api/v1/tg/miniapp/stats',
-
 	// ========== X.com（公开） ==========
 	X_ACCOUNTS: '/api/v1/x/accounts',
 	X_POSTS: '/api/v1/x/posts',
@@ -141,7 +135,6 @@ export const API_PATHS = {
 	ADMIN_SITES: '/api/v1/admin/sites',
 	ADMIN_REDIRECTS: '/api/v1/admin/redirects',
 	ADMIN_PUSH_SEND: '/api/v1/admin/push/send',
-	ADMIN_TG_BROADCAST: '/api/v1/admin/tg/broadcast',
 	ADMIN_X_POST: '/api/v1/admin/x/post',
 	ADMIN_PAYMENT_CREATE: '/api/v1/admin/payment/create',
 	ADMIN_DOMAIN_SWITCH: '/api/v1/admin/domain/switch',
@@ -327,26 +320,6 @@ export const PRERENDER_TAG_SLUGS = [
 	'action', 'comedy', 'romance', 'scifi',
 	'horror', 'war', 'anime', 'variety'
 ];
-
-// ========== TG Mini App 相关常量 ==========
-
-/** TG Mini App Bot Token（后端验证用） */
-export const TG_BOT_TOKEN = '';
-
-/** TG Mini App 深度链接 */
-export const TG_DEEP_LINK = 'https://t.me/xvideos_bot/app';
-
-/** TG 主题色（Mini App 内使用） */
-export const TG_THEME = {
-	BG_COLOR: '#1a1a2e',
-	TEXT_COLOR: '#ffffff',
-	BUTTON_COLOR: '#FB7299',
-	BUTTON_TEXT_COLOR: '#ffffff',
-	SECONDARY_BG_COLOR: '#16213e'
-};
-
-/** TG Mini App 最大初始化等待时间（毫秒） */
-export const TG_INIT_TIMEOUT = 3000;
 
 // ========== 支付相关常量 ==========
 

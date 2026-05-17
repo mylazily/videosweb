@@ -48,9 +48,6 @@
 			case 'twitter':
 				window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`);
 				break;
-			case 'telegram':
-				window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`);
-				break;
 			case 'link':
 				await copyToClipboard(url);
 				break;
@@ -262,15 +259,6 @@
 							</svg>
 						</div>
 						<span class="text-xs text-gray-600 dark:text-dark-text-secondary">X/Twitter</span>
-					</button>
-
-					<button onclick={() => handleShare('telegram')} class="flex flex-col items-center gap-1.5 btn-press">
-						<div class="w-12 h-12 bg-[#0088cc] rounded-full flex items-center justify-center">
-							<svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor">
-								<path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/>
-							</svg>
-						</div>
-						<span class="text-xs text-gray-600 dark:text-dark-text-secondary">Telegram</span>
 					</button>
 
 					<button onclick={() => handleShare('link')} class="flex flex-col items-center gap-1.5 btn-press">
