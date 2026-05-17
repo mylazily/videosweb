@@ -2,7 +2,7 @@
  * 个人中心页 - 客户端加载数据（需要 token）
  */
 import { getToken } from '$lib/auth';
-import { API_BASE } from '$lib/apiConfig';
+import { getBaseUrl } from '$lib/apiConfig';
 
 export async function load({ fetch }) {
 	const token = getToken();
@@ -20,7 +20,8 @@ export async function load({ fetch }) {
 	}
 
 	try {
-		const res = await fetch(`${API_BASE}/api/v1/user/profile`, {
+		const baseUrl = getBaseUrl();
+		const res = await fetch(`${baseUrl}/api/v1/user/profile`, {
 			headers: {
 				'Authorization': `Bearer ${token}`
 			}
