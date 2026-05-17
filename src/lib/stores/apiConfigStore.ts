@@ -11,7 +11,7 @@ import type { ApiDomain } from '$lib/types';
 // ========== Store 状态 ==========
 
 /** 当前激活的 API 基础地址 */
-export const baseUrlStore = writable<string>('');
+export const baseUrlStore = writable<string>('https://9901.555554.xyz');
 
 /** 域名列表 */
 export const domainsStore = writable<ApiDomain[]>(
@@ -37,7 +37,7 @@ export const availableDomainsStore: Readable<ApiDomain[]> = derived(
 
 // ========== 内部状态（非响应式） ==========
 
-let currentBaseUrl = '';
+let currentBaseUrl = 'https://9901.555554.xyz';
 let currentDomains: ApiDomain[] = FALLBACK_DOMAINS.map((url) => ({
 	url,
 	name: new URL(url).hostname,
@@ -202,18 +202,18 @@ export async function checkAndActiveApi(): Promise<string> {
 			baseUrlStore.set(bestDomain);
 			console.log(`[API] 激活域名: ${bestDomain} (延迟: ${bestLatency}ms)`);
 		} else {
-			// 全部失败，使用相对路径（CF _redirects 代理）
-			baseUrlStore.set('');
-			console.warn('[API] 所有域名均不可用，使用CF代理');
+			// 全部失败，使用后端域名
+			baseUrlStore.set('https://9901.555554.xyz');
+			console.warn('[API] 所有域名均不可用，使用后端域名');
 		}
 
 		initializedStore.set(true);
-		return bestDomain || '';
+		return bestDomain || 'https://9901.555554.xyz';
 	} catch (error) {
 		console.error('[API] 域名检测失败:', error);
-		baseUrlStore.set('');
+		baseUrlStore.set('https://9901.555554.xyz');
 		initializedStore.set(true);
-		return '';
+		return 'https://9901.555554.xyz';
 	} finally {
 		checkingStore.set(false);
 	}
