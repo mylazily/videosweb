@@ -11,7 +11,7 @@ import type { ApiDomain } from '$lib/types';
 // ========== Store 状态 ==========
 
 /** 当前激活的 API 基础地址 */
-export const baseUrlStore = writable<string>(FALLBACK_DOMAINS[0]);
+export const baseUrlStore = writable<string>('');
 
 /** 域名列表 */
 export const domainsStore = writable<ApiDomain[]>(
@@ -37,7 +37,7 @@ export const availableDomainsStore: Readable<ApiDomain[]> = derived(
 
 // ========== 内部状态（非响应式） ==========
 
-let currentBaseUrl = FALLBACK_DOMAINS[0];
+let currentBaseUrl = '';
 let currentDomains: ApiDomain[] = FALLBACK_DOMAINS.map((url) => ({
 	url,
 	name: new URL(url).hostname,
@@ -202,18 +202,18 @@ export async function checkAndActiveApi(): Promise<string> {
 			baseUrlStore.set(bestDomain);
 			console.log(`[API] 激活域名: ${bestDomain} (延迟: ${bestLatency}ms)`);
 		} else {
-			// 全部失败，使用第一个硬编码域名
-			baseUrlStore.set(FALLBACK_DOMAINS[0]);
-			console.warn('[API] 所有域名均不可用，使用默认域名');
+			// 全部失败，使用相对路径（CF _redirects 代理）
+			baseUrlStore.set('');
+			console.warn('[API] 所有域名均不可用，使用CF代理');
 		}
 
 		initializedStore.set(true);
-		return bestDomain || FALLBACK_DOMAINS[0];
+		return bestDomain || '';
 	} catch (error) {
 		console.error('[API] 域名检测失败:', error);
-		baseUrlStore.set(FALLBACK_DOMAINS[0]);
+		baseUrlStore.set('');
 		initializedStore.set(true);
-		return FALLBACK_DOMAINS[0];
+		return '';
 	} finally {
 		checkingStore.set(false);
 	}
