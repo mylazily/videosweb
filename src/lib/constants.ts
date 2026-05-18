@@ -161,6 +161,9 @@ export const P2P_ICE_SERVERS: RTCConfiguration = {
 
 // ========== WebSocket 弹幕相关常量 ==========
 
+/** 弹幕 WebSocket URL */
+export const DANMAKU_WS_URL = `wss://${new URL(API_BASE_URL).host}/api/v1/ws/danmaku`;
+
 /** WebSocket 心跳间隔（毫秒） */
 export const WS_HEARTBEAT_INTERVAL = 30000;
 

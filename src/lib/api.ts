@@ -334,3 +334,74 @@ export const getMonthlyRank = (params?: { limit?: number }) =>
 
 export const healthCheck = () =>
 	get<{ status: string; service: string; version: string }>(API_PATHS.HEALTH);
+
+// ========== 奖励相关 ==========
+
+export interface RewardBalance {
+	balance: number;
+	total_earned: number;
+	total_spent: number;
+}
+
+export interface DailyTask {
+	id: string;
+	type: string;
+	name: string;
+	reward: number;
+	completed: boolean;
+	completed_at?: string;
+}
+
+export interface RewardHistoryItem {
+	id: string;
+	type: string;
+	amount: number;
+	balance_after: number;
+	created_at: string;
+}
+
+export const getRewardBalance = () =>
+	get<RewardBalance>('/api/v1/reward/balance');
+
+export const getDailyTasks = () =>
+	get<{ tasks: DailyTask[] }>('/api/v1/reward/daily-tasks');
+
+export const getRewardHistory = (params?: { page?: number; page_size?: number }) =>
+	get<{ list: RewardHistoryItem[]; total: number }>('/api/v1/reward/history', params as Record<string, string | number>);
+
+// ========== VIP 相关 ==========
+
+export interface VIPStatus {
+	is_vip: boolean;
+	vip_level: number;
+	vip_expires_at?: string;
+}
+
+export const getVIPStatus = () =>
+	get<VIPStatus>('/api/v1/vip/status');
+
+export const verifyVIPPayment = (orderId: string) =>
+	post<VIPStatus>('/api/v1/vip/verify-payment', { order_id: orderId });
+
+// ========== 支付相关 ==========
+
+export interface PaymentChannel {
+	id: string;
+	name: string;
+	icon: string;
+	enabled: boolean;
+}
+
+export const getPaymentChannels = () =>
+	get<{ channels: PaymentChannel[] }>('/api/v1/payment/channels');
+
+export const adminCreatePaymentOrder = (data: { plan_id: string; channel_id: string }) =>
+	post<{ order_id: string; pay_url: string; qr_code: string }>('/api/v1/admin/payment/create', data);
+
+// ========== 管理后台 ==========
+
+export const adminUnlockVideo = (videoId: string) =>
+	post<{ success: boolean }>(`/api/v1/admin/videos/${videoId}/unlock`);
+
+export const adminDailyCheckin = (userId?: string) =>
+	post<{ success: boolean; reward: number }>('/api/v1/admin/daily-checkin', userId ? { user_id: userId } : {});
