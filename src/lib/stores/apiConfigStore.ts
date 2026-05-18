@@ -10,8 +10,8 @@ import type { ApiDomain } from '$lib/types';
 
 // ========== Store 状态 ==========
 
-/** 当前激活的 API 基础地址 */
-export const baseUrlStore = writable<string>('https://9901.555554.xyz');
+/** 当前激活的 API 基础地址 - 使用相对路径或代理 */
+export const baseUrlStore = writable<string>('');
 
 /** 域名列表 */
 export const domainsStore = writable<ApiDomain[]>(
@@ -37,7 +37,7 @@ export const availableDomainsStore: Readable<ApiDomain[]> = derived(
 
 // ========== 内部状态（非响应式） ==========
 
-let currentBaseUrl = 'https://9901.555554.xyz';
+let currentBaseUrl = '';
 let currentDomains: ApiDomain[] = FALLBACK_DOMAINS.map((url) => ({
 	url,
 	name: new URL(url).hostname,
@@ -202,18 +202,18 @@ export async function checkAndActiveApi(): Promise<string> {
 			baseUrlStore.set(bestDomain);
 			console.log(`[API] 激活域名: ${bestDomain} (延迟: ${bestLatency}ms)`);
 		} else {
-			// 全部失败，使用后端域名
-			baseUrlStore.set('https://9901.555554.xyz');
-			console.warn('[API] 所有域名均不可用，使用后端域名');
+			// 全部失败，使用空字符串（相对路径，通过 Cloudflare Pages 代理）
+			baseUrlStore.set('');
+			console.warn('[API] 所有域名均不可用，使用相对路径');
 		}
 
 		initializedStore.set(true);
-		return bestDomain || 'https://9901.555554.xyz';
+		return bestDomain || '';
 	} catch (error) {
 		console.error('[API] 域名检测失败:', error);
-		baseUrlStore.set('https://9901.555554.xyz');
+		baseUrlStore.set('');
 		initializedStore.set(true);
-		return 'https://9901.555554.xyz';
+		return '';
 	} finally {
 		checkingStore.set(false);
 	}

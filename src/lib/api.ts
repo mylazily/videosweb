@@ -99,7 +99,8 @@ export async function request<T = unknown>(
 
 	// 构建完整 URL
 	const base = getBaseUrl();
-	const fullUrl = `${base}${path}`;
+	// 如果 base 为空，使用相对路径（通过 Cloudflare Pages 代理到后端）
+	const fullUrl = base ? `${base}${path}` : path;
 
 	// 构建请求参数
 	const fetchOptions: RequestInit = {
