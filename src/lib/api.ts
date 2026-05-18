@@ -334,7 +334,3 @@ export const getMonthlyRank = (params?: { limit?: number }) =>
 
 export const healthCheck = () =>
 	get<{ status: string; service: string; version: string }>(API_PATHS.HEALTH);
-
-// ========== 导出类型 ==========
-
-export type { Video, Comment, Tag, RankItem, LoginResponse, LoginRequest, ApiResponse };

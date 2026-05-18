@@ -86,6 +86,15 @@ export const API_TIMEOUT = 8000;
 /** 域名探活超时时间（毫秒） */
 export const DOMAIN_CHECK_TIMEOUT = 3000;
 
+/** 域名健康检查间隔（毫秒） */
+export const DOMAIN_HEALTH_CHECK_INTERVAL = 30000;
+
+/** 域名切换超时时间（毫秒） */
+export const DOMAIN_SWITCH_TIMEOUT = 5000;
+
+/** 域名轮换路径 */
+export const DOMAIN_ROTATION_PATH = '/api/v1/health';
+
 // ========== 分页配置 ==========
 
 export const PAGE_SIZE = 20;
@@ -179,3 +188,129 @@ export const DEFAULT_SEO_DESCRIPTION = 'VideosGo 影视聚合系统 - 在线观�
 
 /** 默认 SEO 关键词 */
 export const DEFAULT_SEO_KEYWORDS = '影视,电影,电视剧,动漫,短视频,在线观看';
+
+// ========== 加密相关常量 ==========
+
+/** XOR 加密密钥 */
+export const XOR_KEY = 'videosgo2024';
+
+// ========== 站群相关常量 ==========
+
+/** 站群域名列表 */
+export const CLUSTER_DOMAINS: Record<string, {
+	domain: string;
+	cluster: 'A' | 'B';
+	is_primary: boolean;
+}> = {};
+
+/** Bot UA 匹配模式 */
+export const BOT_UA_PATTERNS = [
+	'Googlebot',
+	'Bingbot',
+	'Slurp',
+	'DuckDuckBot',
+	'Baiduspider',
+	'YandexBot',
+	'facebot',
+	'Twitterbot',
+	'Applebot',
+	'Scrapy',
+	'curl',
+	'wget',
+	'python-requests',
+	'node-fetch',
+	'HttpClient'
+];
+
+// ========== P2P 相关配置 ==========
+
+/** P2P 信令服务器 */
+export const P2P_SIGNALING_SERVER = '';
+
+/** P2P 数据通道配置 */
+export const P2P_DATA_CHANNEL_CONFIG: RTCDataChannelInit = {
+	ordered: true,
+	maxRetransmits: 3
+};
+
+/** P2P 连接超时（毫秒） */
+export const P2P_CONNECTION_TIMEOUT = 15000;
+
+// ========== Push 通知相关 ==========
+
+/** VAPID 公钥 */
+export const PUSH_VAPID_PUBLIC_KEY = '';
+
+/** Push 订阅密钥 */
+export const PUSH_SUBSCRIPTION_KEY = 'push_subscription_v1';
+
+// ========== 奖励相关 ==========
+
+/** 签到奖励金币数 */
+export const CHECKIN_REWARD = 10;
+
+/** 看广告奖励金币数 */
+export const AD_REWARD = 5;
+
+/** 分享奖励金币数 */
+export const SHARE_REWARD = 3;
+
+/** 邀请奖励金币数 */
+export const INVITE_REWARD = 20;
+
+// ========== 支付相关 ==========
+
+/** 支付轮询间隔（毫秒） */
+export const PAYMENT_POLL_INTERVAL = 3000;
+
+/** 支付订单过期时间（秒） */
+export const PAYMENT_ORDER_EXPIRE = 300;
+
+/** VIP 套餐配置 */
+export const VIP_PLANS = [
+	{ id: 'vip_monthly', name: '月度会员', price: 15, duration: 30 },
+	{ id: 'vip_yearly', name: '年度会员', price: 120, duration: 365 }
+];
+
+// ========== 社交相关 ==========
+
+/** 社交平台引荐域名列表 */
+export const SOCIAL_REFERRER_DOMAINS = [
+	'twitter.com',
+	'x.com',
+	'facebook.com',
+	'weibo.com',
+	'douyin.com',
+	'bilibili.com'
+];
+
+// ========== SEO 相关 ==========
+
+/** 网站基础 URL */
+export const SITE_BASE_URL = 'https://901.555554.xyz';
+
+// ========== PWA 相关 ==========
+
+/** PWA 安装提示Dismissed 键 */
+export const PWA_INSTALL_DISMISSED_KEY = 'pwa_install_dismissed_v1';
+
+// ========== Push Prompt 相关 ==========
+
+/** Push 提示 Dismissed 键 */
+export const PUSH_PROMPT_DISMISSED_KEY = 'push_prompt_dismissed_v1';
+
+// ========== 播放器配置 ==========
+
+/** P2P 配置 */
+export const P2P_CONFIG = {
+	/** 启用 P2P */
+	enabled: false,
+	/** P2P 下载百分比 */
+	downloadRatio: 0.3,
+	/** WebRTC 配置 */
+	webRTCConfig: {
+		iceServers: [
+			{ urls: 'stun:stun.l.google.com:19302' }
+		]
+	}
+};
