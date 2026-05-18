@@ -9,7 +9,7 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { setToken, setRefreshToken, setUserInfo } from '$lib/auth';
-	import { getBaseUrl } from '$lib/apiConfig';
+	import { getApiBaseUrl } from '$lib/constants';
 	import type { ApiResponse, LoginResponse } from '$lib/types';
 
 	// ==================== 状态定义 ====================
@@ -108,7 +108,7 @@
 		errorMessage = '';
 
 		try {
-			const baseUrl = getBaseUrl();
+			const baseUrl = getApiBaseUrl();
 			const controller = new AbortController();
 			const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 

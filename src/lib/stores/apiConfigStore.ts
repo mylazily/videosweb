@@ -1,27 +1,24 @@
 /**
  * API 配置状态管理 Store
- * 使用 Svelte 5 的 $state 在 .svelte 文件中创建响应式状态
- * 此文件仅提供基础状态和操作函数
+ * 
+ * 核心策略：动态域名拼接
+ * 从浏览器地址栏自动提取主域名，拼接 api 二级域名
+ * 例如：用户访问 https://901.555554.xyz → API 地址为 https://api.555554.xyz
+ * 
+ * 不再依赖 Gist 或硬编码域名列表，完全自动化
  */
 
 import { writable, derived, type Readable } from 'svelte/store';
-import { FALLBACK_DOMAINS, DOMAIN_CHECK_TIMEOUT, API_PATHS, DOMAIN_GIST_URL } from '$lib/constants';
+import { getApiBaseUrl, API_PATHS, DOMAIN_CHECK_TIMEOUT } from '$lib/constants';
 import type { ApiDomain } from '$lib/types';
 
 // ========== Store 状态 ==========
 
-/** 当前激活的 API 基础地址 - 使用相对路径或代理 */
+/** 当前激活的 API 基础地址 */
 export const baseUrlStore = writable<string>('');
 
 /** 域名列表 */
-export const domainsStore = writable<ApiDomain[]>(
-	FALLBACK_DOMAINS.map((url) => ({
-		url,
-		name: new URL(url).hostname,
-		alive: false,
-		latency: 0
-	}))
-);
+export const domainsStore = writable<ApiDomain[]>([]);
 
 /** 是否正在检测域名 */
 export const checkingStore = writable<boolean>(false);
@@ -29,35 +26,19 @@ export const checkingStore = writable<boolean>(false);
 /** 是否已初始化 */
 export const initializedStore = writable<boolean>(false);
 
-/** 获取可用域名列表（按延迟排序） */
+/** 获取可用域名列表 */
 export const availableDomainsStore: Readable<ApiDomain[]> = derived(
 	domainsStore,
 	($domains) => $domains.filter((d) => d.alive).sort((a, b) => a.latency - b.latency)
 );
 
-// ========== 内部状态（非响应式） ==========
+// ========== 内部状态 ==========
 
 let currentBaseUrl = '';
-let currentDomains: ApiDomain[] = FALLBACK_DOMAINS.map((url) => ({
-	url,
-	name: new URL(url).hostname,
-	alive: false,
-	latency: 0
-}));
-let isChecking = false;
 let isInitialized = false;
 
-// 订阅 store 保持内部状态同步
 baseUrlStore.subscribe((value) => {
 	currentBaseUrl = value;
-});
-
-domainsStore.subscribe((value) => {
-	currentDomains = value;
-});
-
-checkingStore.subscribe((value) => {
-	isChecking = value;
 });
 
 initializedStore.subscribe((value) => {
@@ -68,13 +49,10 @@ initializedStore.subscribe((value) => {
 
 /**
  * 带超时的 fetch 请求
- * @param url 请求地址
- * @param timeout 超时时间（毫秒）
  */
 async function fetchWithTimeout(url: string, timeout: number): Promise<Response> {
 	const controller = new AbortController();
 	const timer = setTimeout(() => controller.abort(), timeout);
-
 	try {
 		const response = await fetch(url, {
 			method: 'GET',
@@ -83,16 +61,14 @@ async function fetchWithTimeout(url: string, timeout: number): Promise<Response>
 		});
 		clearTimeout(timer);
 		return response;
-	} catch (error) {
+	} catch {
 		clearTimeout(timer);
-		throw error;
+		throw new Error('fetch timeout');
 	}
 }
 
 /**
  * 检测单个域名是否可用
- * @param domain 域名地址
- * @returns 延迟时间（毫秒），失败返回 -1
  */
 async function pingDomain(domain: string): Promise<number> {
 	const startTime = Date.now();
@@ -107,108 +83,52 @@ async function pingDomain(domain: string): Promise<number> {
 	}
 }
 
-/**
- * 从 GitHub Gist 拉取域名列表
- */
-async function fetchDomainsFromGist(): Promise<string[]> {
-	try {
-		const response = await fetchWithTimeout(DOMAIN_GIST_URL, 3000);
-		if (!response.ok) return [];
-		const data = await response.json();
-		if (Array.isArray(data) && data.length > 0) {
-			return data.filter((url: string) => url.startsWith('http'));
-		}
-		return [];
-	} catch {
-		return [];
-	}
-}
-
 // ========== 核心函数 ==========
 
 /**
  * 检测并激活可用的 API 域名
- * 优先从 GitHub Gist 获取域名列表，失败则使用硬编码域名
- * 使用竞速模式快速返回第一个可用的域名
+ * 
+ * 策略：
+ * 1. 动态计算 api.{domain} 作为主域名
+ * 2. 探活检测，成功则激活
+ * 3. 失败则使用相对路径（通过 Cloudflare Pages Function 代理）
  */
 export async function checkAndActiveApi(): Promise<string> {
-	if (isChecking) return currentBaseUrl;
+	if (isInitialized) return currentBaseUrl;
+
 	checkingStore.set(true);
 
 	try {
-		// 1. 尝试从 Gist 获取域名列表（快速超时）
-		const gistPromise = fetchDomainsFromGist();
-		const gistTimeout = new Promise<string[]>((resolve) => 
-			setTimeout(() => resolve([]), 1500)
-		);
-		const gistDomains = await Promise.race([gistPromise, gistTimeout]);
-		
-		const allDomains = gistDomains.length > 0 ? gistDomains : FALLBACK_DOMAINS;
+		// 1. 动态计算 API 域名
+		const dynamicUrl = getApiBaseUrl();
 
-		// 2. 更新域名列表状态
-		const newDomains = allDomains.map((url) => ({
-			url,
-			name: new URL(url).hostname,
-			alive: false,
-			latency: 0
-		}));
-		domainsStore.set(newDomains);
+		if (dynamicUrl) {
+			// 2. 探活检测
+			const latency = await pingDomain(dynamicUrl);
+			const domainInfo: ApiDomain = {
+				url: dynamicUrl,
+				name: new URL(dynamicUrl).hostname,
+				alive: latency > 0,
+				latency: latency > 0 ? latency : 0
+			};
 
-		// 3. 竞速模式：返回第一个可用的域名
-		const domainPromises = allDomains.map(async (domain) => {
-			const latency = await pingDomain(domain);
-			return { domain, latency };
-		});
+			domainsStore.set([domainInfo]);
 
-		// 添加一个超时 Promise
-		const timeoutPromise = new Promise<{ domain: string; latency: number }>((_, reject) => 
-			setTimeout(() => reject(new Error('Timeout')), DOMAIN_CHECK_TIMEOUT)
-		);
-
-		let bestDomain = '';
-		let bestLatency = Infinity;
-
-		try {
-			// 等待第一个成功的结果
-			const firstResult = await Promise.race([
-				...domainPromises.map(p => p.then(r => r.latency > 0 ? r : Promise.reject())),
-				timeoutPromise
-			]);
-			bestDomain = firstResult.domain;
-			bestLatency = firstResult.latency;
-		} catch {
-			// 竞速超时或全部失败，等待所有结果
-			const results = await Promise.allSettled(domainPromises);
-			const updatedDomains = [...newDomains];
-
-			for (const result of results) {
-				if (result.status === 'fulfilled' && result.value.latency > 0) {
-					const { domain, latency } = result.value;
-					const idx = updatedDomains.findIndex((d) => d.url === domain);
-					if (idx >= 0) {
-						updatedDomains[idx] = { ...updatedDomains[idx], alive: true, latency };
-					}
-					if (latency < bestLatency) {
-						bestLatency = latency;
-						bestDomain = domain;
-					}
-				}
+			if (latency > 0) {
+				baseUrlStore.set(dynamicUrl);
+				console.log(`[API] 激活域名: ${dynamicUrl} (延迟: ${latency}ms)`);
+			} else {
+				baseUrlStore.set('');
+				console.warn(`[API] 域名 ${dynamicUrl} 不可用，使用相对路径`);
 			}
-			domainsStore.set(updatedDomains);
-		}
-
-		// 4. 设置激活的域名
-		if (bestDomain) {
-			baseUrlStore.set(bestDomain);
-			console.log(`[API] 激活域名: ${bestDomain} (延迟: ${bestLatency}ms)`);
 		} else {
-			// 全部失败，使用空字符串（相对路径，通过 Cloudflare Pages 代理）
+			// 开发环境或 IP 访问，使用相对路径
 			baseUrlStore.set('');
-			console.warn('[API] 所有域名均不可用，使用相对路径');
+			console.log('[API] 使用相对路径（开发模式）');
 		}
 
 		initializedStore.set(true);
-		return bestDomain || '';
+		return currentBaseUrl;
 	} catch (error) {
 		console.error('[API] 域名检测失败:', error);
 		baseUrlStore.set('');
@@ -224,7 +144,6 @@ export async function checkAndActiveApi(): Promise<string> {
  */
 export function switchDomain(domainUrl: string): void {
 	baseUrlStore.set(domainUrl);
-	// 更新域名状态
 	domainsStore.update((domains) => {
 		const idx = domains.findIndex((d) => d.url === domainUrl);
 		if (idx >= 0) {
@@ -242,38 +161,4 @@ export function switchDomain(domainUrl: string): void {
  */
 export function getBaseUrl(): string {
 	return currentBaseUrl;
-}
-
-/**
- * 获取域名列表
- */
-export function getDomains(): ApiDomain[] {
-	return currentDomains;
-}
-
-/**
- * 获取检测状态
- */
-export function getIsChecking(): boolean {
-	return isChecking;
-}
-
-/**
- * 是否已初始化
- */
-export function getIsInitialized(): boolean {
-	return isInitialized;
-}
-
-// ========== Service Worker 通信 ==========
-
-if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-	navigator.serviceWorker.addEventListener('message', (event) => {
-		if (event.data?.type === 'API_DOMAIN_UPDATE') {
-			const newDomain = event.data.domain;
-			if (newDomain && newDomain.startsWith('http')) {
-				switchDomain(newDomain);
-			}
-		}
-	});
 }

@@ -6,7 +6,7 @@
  */
 
 import { getToken, clearTokens } from './auth';
-import { API_PATHS, API_BASE_URL } from './constants';
+import { API_PATHS, getApiBaseUrl } from './constants';
 import type { ApiResponse } from './types';
 
 // ========== 请求配置 ==========
@@ -96,8 +96,9 @@ export async function request<T = unknown>(
 		isFormData = false
 	} = options;
 
-	// 构建完整 URL - 直接使用固定 API 地址
-	const fullUrl = `${API_BASE_URL}${path}`;
+	// 构建完整 URL - 动态拼接 api.{domain}
+	const baseUrl = getApiBaseUrl();
+	const fullUrl = baseUrl ? `${baseUrl}${path}` : path;
 
 	// 构建请求参数
 	const fetchOptions: RequestInit = {
