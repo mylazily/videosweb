@@ -32,10 +32,7 @@ const API_TIMEOUT = 5000;
 
 // 硬编码的备用 API 域名
 const FALLBACK_DOMAINS = [
-	'https://api.xvideos1.com',
-	'https://api.xvideos2.com',
-	'https://api.xvideos3.com',
-	'https://api.xvideos4.com'
+	'https://9901.555554.xyz'
 ];
 
 // 当前激活的 API 域名
@@ -123,7 +120,7 @@ async function checkDomain(domain) {
 	try {
 		const startTime = Date.now();
 		const response = await fetchWithTimeout(
-			`${domain}/api/health`,
+			`${domain}/api/v1/health`,
 			{ method: 'GET', mode: 'cors' },
 			3000
 		);
