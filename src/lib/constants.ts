@@ -224,7 +224,7 @@ export const DANMAKU_CONFIG = {
  * 核心逻辑：从浏览器地址栏自动提取主域名，拼接 api 二级域名
  * 例如：用户访问 https://901.555554.xyz → API 地址为 https://api.555554.xyz
  * 
- * 这样无论站群扩展到多少个域名，前端代码都不需要修改
+ * 如果动态域名不可用，回退到 9901.555554.xyz
  */
 export function getApiBaseUrl(): string {
 	if (typeof window === 'undefined') return '';
@@ -232,16 +232,14 @@ export function getApiBaseUrl(): string {
 	const hostname = window.location.hostname;
 	const parts = hostname.split('.');
 
-	// 取最后两级作为主域名（例如 555554.xyz）
-	// 如果是三级域名（如 901.555554.xyz），取后两级
-	// 如果是 IP 地址或 localhost，返回空字符串（使用相对路径）
-	if (parts.length < 2) return '';
+	// 如果是 IP 地址或 localhost，使用备用域名
+	if (parts.length < 2) return 'https://9901.555554.xyz';
 
 	const baseDomain = parts.slice(-2).join('.');
 
-	// 如果是 IP 地址或 localhost，使用相对路径
+	// 如果是 IP 地址或 localhost，使用备用域名
 	if (/^\d+\.\d+\.\d+\.\d+$/.test(baseDomain) || baseDomain === 'localhost') {
-		return '';
+		return 'https://9901.555554.xyz';
 	}
 
 	return `https://api.${baseDomain}`;
