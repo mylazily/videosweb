@@ -3,18 +3,7 @@
   import HeaderBar from '$components/HeaderBar.svelte';
   import NavBar from '$components/NavBar.svelte';
   import VideoCard from '$components/VideoCard.svelte';
-
-  type Video = {
-    id: string | number;
-    title: string;
-    cover: string;
-    play_count?: number;
-    like_count?: number;
-    danmaku_count?: number;
-    duration?: number;
-    author?: string;
-    category?: string;
-  };
+  import type { Video } from '$lib/types';
 
   let videos = $state<Video[]>([]);
   let loading = $state(false);

@@ -1,27 +1,15 @@
 <script lang="ts">
-  type Video = {
-    id: string | number;
-    title: string;
-    cover: string;
-    play_count?: number;
-    duration?: number;
-    author?: string;
-  };
+  import type { Video } from '$lib/types';
 
   let { video } = $props<{ video: Video }>();
 
   let loaded = $state(false);
   let error = $state(false);
 
+  // 格式化播放量
   function formatCount(n: number): string {
     if (n >= 10000) return (n / 10000).toFixed(1) + '万';
     return n.toString();
-  }
-
-  function formatDuration(seconds: number): string {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m}:${s.toString().padStart(2, '0')}`;
   }
 </script>
 
