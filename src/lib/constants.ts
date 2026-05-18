@@ -170,16 +170,19 @@ export const CATEGORIES: { slug: string; name: string; icon: string }[] = [
 /** GitHub Gist 地址（存储可用域名列表） */
 export const DOMAIN_GIST_URL = 'https://gist.githubusercontent.com/xvideos-domains/main/domains.json';
 
-/** 硬编码备用域名列表 */
+/** 硬编码 API 域名 - 直接使用 Cloudflare 代理的域名 */
 export const FALLBACK_DOMAINS = [
 	'https://9901.555554.xyz'
 ];
 
+/** API 基础 URL - 固定使用 HTTPS */
+export const API_BASE_URL = 'https://9901.555554.xyz';
+
 /** API 请求超时时间（毫秒） */
-export const API_TIMEOUT = 5000;
+export const API_TIMEOUT = 10000;
 
 /** 域名探活超时时间（毫秒） */
-export const DOMAIN_CHECK_TIMEOUT = 3000;
+export const DOMAIN_CHECK_TIMEOUT = 5000;
 
 // ========== 分页配置 ==========
 

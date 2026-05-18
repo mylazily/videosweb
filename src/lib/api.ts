@@ -5,9 +5,8 @@
  * 所有路径使用 API_PATHS 常量，与后端 router.go 严格对应
  */
 
-import { getBaseUrl } from './apiConfig';
 import { getToken, clearTokens } from './auth';
-import { API_PATHS } from './constants';
+import { API_PATHS, API_BASE_URL } from './constants';
 import type { ApiResponse } from './types';
 
 // ========== 请求配置 ==========
@@ -97,10 +96,8 @@ export async function request<T = unknown>(
 		isFormData = false
 	} = options;
 
-	// 构建完整 URL
-	const base = getBaseUrl();
-	// 如果 base 为空，使用相对路径（通过 Cloudflare Pages 代理到后端）
-	const fullUrl = base ? `${base}${path}` : path;
+	// 构建完整 URL - 直接使用固定 API 地址
+	const fullUrl = `${API_BASE_URL}${path}`;
 
 	// 构建请求参数
 	const fetchOptions: RequestInit = {
