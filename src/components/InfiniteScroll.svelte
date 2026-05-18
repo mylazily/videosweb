@@ -19,7 +19,7 @@
 		onLoadMore
 	}: Props = $props();
 
-	let sentinel: HTMLElement | null = $state(null);
+	let sentinel: HTMLElement;
 
 	onMount(() => {
 		// 使用 IntersectionObserver 监听底部元素

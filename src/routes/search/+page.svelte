@@ -10,7 +10,7 @@
   import { onMount } from 'svelte';
   import { page } from '$app/state';
 
-  let hotWords = $state<Array<string | { keyword?: string; name?: string; word?: string }>>([]);
+  let hotWords = $state<string[]>([]);
   let searchResults = $state<Video[]>([]);
   let keyword = $state(page.url.searchParams.get('q') || '');
   let loading = $state(false);

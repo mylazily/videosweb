@@ -254,7 +254,7 @@ function isNavigationRequest(request) {
  * 判断是否为播放器页面
  */
 function isPlayerPage(url) {
-	return url.pathname.startsWith('/video/') || url.pathname.startsWith('/v/');
+	return url.pathname.startsWith('/video/');
 }
 
 /**

@@ -16,7 +16,7 @@
   let { data } = $props();
 
   // 动态导入播放器
-  let P2PVideoPlayer = $state<any>(null);
+  let P2PVideoPlayer: any = null;
   onMount(async () => {
     const mod = await import('$components/P2PVideoPlayer.svelte');
     P2PVideoPlayer = mod.default;

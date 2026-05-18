@@ -62,18 +62,13 @@
 
 		try {
 			const res = await adminUnlockVideo({ user_id: '', video_id: videoId });
-			if (res.code === 0 && res.data) {
-				const unlockData = res.data as { success?: boolean; balance_after?: number };
-				if (unlockData.success) {
-					unlocked = true;
-					showSuccess = true;
-					balance = unlockData.balance_after ?? balance;
-					onSuccess?.();
+			if (res.code === 0 && res.data?.success) {
+				unlocked = true;
+				showSuccess = true;
+				balance = res.data.balance_after;
+				onSuccess?.();
 
-					setTimeout(() => { showSuccess = false; }, 3000);
-				} else {
-					error = res.message || '解锁失败';
-				}
+				setTimeout(() => { showSuccess = false; }, 3000);
 			} else {
 				error = res.message || '解锁失败';
 			}

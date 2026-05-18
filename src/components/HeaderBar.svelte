@@ -67,8 +67,8 @@
 {:else}
   <header class="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-100">
     <div class="flex items-center h-11 px-3">
-      <button onclick={() => window.history.back()} class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors" aria-label="返回">
-        <svg class="w-5 h-5 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <button onclick={() => window.history.back()} class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors">
+        <svg class="w-5 h-5 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M15 19l-7-7 7-7"/>
         </svg>
       </button>

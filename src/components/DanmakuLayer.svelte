@@ -66,7 +66,7 @@
 	// ========== 动画控制 ==========
 	let animationId: number | null = null;
 	let lastFrameTime = 0;
-	let isPaused = $state(false);
+	let isPaused = false;
 	let isDestroyed = false;
 	let timeoutIds: number[] = []; // 存储所有setTimeout ID用于清理
 

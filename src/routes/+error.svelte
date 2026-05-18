@@ -74,9 +74,9 @@
 	</div>
 
 	<!-- 错误详情（开发模式显示） -->
-	{#if errorStack}
+	{#if errorStack()}
 		<div class="mt-8 p-4 bg-dark-card rounded-lg max-w-2xl w-full overflow-auto">
-			<pre class="text-xs text-text-secondary whitespace-pre-wrap">{errorStack}</pre>
+			<pre class="text-xs text-text-secondary whitespace-pre-wrap">{errorStack()}</pre>
 		</div>
 	{/if}
 </div>

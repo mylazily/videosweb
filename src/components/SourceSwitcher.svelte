@@ -32,7 +32,7 @@
 	let testingLatency = $state(false);
 
 	// 合并外部传入的延迟和内部测速的延迟
-	const mergedLatencies = $derived.by(() => {
+	const mergedLatencies = $derived(() => {
 		const result = new Map<number, number>();
 		// 优先使用内部测速结果
 		internalLatencies.forEach((val, key) => result.set(key, val));
@@ -44,8 +44,8 @@
 	});
 
 	// 推荐线路索引（延迟最低的）
-	const recommendedIndex = $derived.by(() => {
-		const lats = mergedLatencies;
+	const recommendedIndex = $derived(() => {
+		const lats = mergedLatencies();
 		if (lats.size === 0) return -1;
 
 		let bestIndex = -1;
@@ -141,8 +141,8 @@
 
 		<div class="flex gap-2 overflow-x-auto hide-scrollbar pb-1">
 			{#each playLines as line, index}
-				{@const latency = mergedLatencies.get(index)}
-				{@const isRecommended = recommendedIndex === index && index !== currentIndex}
+				{@const latency = mergedLatencies().get(index)}
+				{@const isRecommended = recommendedIndex() === index && index !== currentIndex}
 				{@const isCurrent = index === currentIndex}
 
 				<button
