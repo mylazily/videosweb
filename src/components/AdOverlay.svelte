@@ -28,8 +28,9 @@
 
 	// 状态
 	let countdown = $state(AD_WATCH_DURATION);
-	let canSkip = $state(isVIP);
 	let isCompleted = $state(false);
+	// canSkip 使用 derived 状态，根据 VIP 状态和倒计时结束动态计算
+	let canSkip = $derived(isVIP || isCompleted);
 	let timer: ReturnType<typeof setInterval> | null = null;
 
 	/**

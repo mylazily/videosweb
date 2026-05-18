@@ -25,6 +25,19 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
 	return outputArray;
 }
 
+/**
+ * 将 Uint8Array 转换为 Base64 字符串（用于 applicationServerKey）
+ * @param array Uint8Array 数组
+ * @returns Base64 字符串
+ */
+function uint8ArrayToBase64(array: Uint8Array): string {
+	let binary = '';
+	for (let i = 0; i < array.byteLength; i++) {
+		binary += String.fromCharCode(array[i]);
+	}
+	return btoa(binary);
+}
+
 // ========== 核心函数 ==========
 
 /**
@@ -91,10 +104,10 @@ export async function subscribePush(fingerprintId?: string): Promise<PushSubscri
 		// 获取 Service Worker 注册
 		const registration = await navigator.serviceWorker.ready;
 
-		// 订阅 Push
+		// 订阅 Push - 使用 Base64 字符串格式的 VAPID 公钥
 		const subscription = await registration.pushManager.subscribe({
 			userVisibleOnly: true,
-			applicationServerKey: urlBase64ToUint8Array(PUSH_VAPID_PUBLIC_KEY)
+			applicationServerKey: PUSH_VAPID_PUBLIC_KEY
 		});
 
 		// 构建订阅信息
