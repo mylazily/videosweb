@@ -51,11 +51,19 @@ async function responseInterceptor<T>(response: Response): Promise<ApiResponse<T
 	// 处理 401 未授权
 	if (response.status === 401) {
 		clearTokens();
-		// 跳转到登录页
 		if (typeof window !== 'undefined') {
 			window.location.href = '/login';
 		}
 		throw new Error('登录已过期，请重新登录');
+	}
+
+	// 防御性检查：确保响应是 JSON
+	// 如果 Cloudflare 返回 HTML 错误页面（如 1003/521），直接拦截
+	const contentType = response.headers.get('content-type') ?? '';
+	if (!contentType.includes('application/json')) {
+		const rawText = await response.text().catch(() => '');
+		console.error(`[API] 非JSON响应 (${response.status}):`, rawText.substring(0, 500));
+		throw new Error('服务器暂时不可用，请稍后重试');
 	}
 
 	// 处理非 200 响应
