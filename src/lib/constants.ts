@@ -72,6 +72,9 @@ export const API_PATHS = {
 /** 主 API 域名 */
 export const API_BASE_URL = 'https://9901.555554.xyz';
 
+/** 域名列表 Gist URL（可选） */
+export const DOMAIN_GIST_URL = 'https://gist.githubusercontent.com/xvideos-domains/main/domains.json';
+
 /** 备用域名列表 */
 export const FALLBACK_DOMAINS = [
 	'https://9901.555554.xyz'
