@@ -176,9 +176,17 @@ export interface RegisterRequest {
 	email: string;
 }
 
-/** 登录响应 */
+/** 登录响应（与后端 TokenResponse 对应） */
 export interface LoginResponse {
-	token: string;
+	/** 访问令牌 */
+	access_token: string;
+	/** 刷新令牌 */
+	refresh_token: string;
+	/** 令牌类型 */
+	token_type: string;
+	/** 过期时间（秒） */
+	expires_in: number;
+	/** 用户信息 */
 	user: User;
 }
 
