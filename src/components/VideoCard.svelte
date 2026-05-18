@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Video } from '$lib/types';
+  import { formatDuration } from '$lib/utils';
 
   let { video } = $props<{ video: Video }>();
 

@@ -48,7 +48,6 @@
 	 */
 	function handleCountdownEnd(): void {
 		isCompleted = true;
-		canSkip = true;
 		clearTimer();
 		onComplete?.();
 	}
@@ -66,7 +65,6 @@
 	// VIP 用户自动跳过
 	$effect(() => {
 		if (isVIP) {
-			canSkip = true;
 			clearTimer();
 		}
 	});
@@ -87,7 +85,7 @@
 	});
 
 	// 格式化倒计时
-	let formattedTime = $derived(() => {
+	let formattedTime = $derived.by(() => {
 		const seconds = Math.max(0, countdown);
 		return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
 	});
@@ -135,7 +133,7 @@
 		{:else}
 			<!-- 倒计时 -->
 			<div class="ad-countdown-area">
-				<span class="ad-countdown-text">{formattedTime()}</span>
+				<span class="ad-countdown-text">{formattedTime}</span>
 				<button
 					onclick={handleSkip}
 					disabled={!canSkip}

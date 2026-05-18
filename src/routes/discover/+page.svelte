@@ -3,7 +3,7 @@
   import HeaderBar from '$components/HeaderBar.svelte';
   import NavBar from '$components/NavBar.svelte';
 
-  let hotSearchWords = $state<string[]>([]);
+  let hotSearchWords = $state<Array<string | { keyword?: string; name?: string }>>([]);
   let tags = $state<{ slug: string; name: string }[]>([]);
   let rankVideos = $state<{ id: string | number; title: string; play_count: number }[]>([]);
   let loading = $state(true);

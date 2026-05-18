@@ -52,8 +52,8 @@ async function responseInterceptor<T>(response: Response): Promise<ApiResponse<T
 	// 处理 401 未授权
 	if (response.status === 401) {
 		clearTokens();
-		// 跳转到登录页
-		if (typeof window !== 'undefined') {
+		// 跳转到登录页（避免在登录页无限循环）
+		if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
 			window.location.href = '/login';
 		}
 		throw new Error('登录已过期，请重新登录');
@@ -235,7 +235,7 @@ export function getVideoList(params?: { page?: number; page_size?: number; categ
 	if (params?.category) query.set('category', params.category);
 	if (params?.tag) query.set('tag', params.tag);
 	const qs = query.toString();
-	return get(`/api/v1/videos${qs ? `?${qs}` : ''}`);
+	return get(`${API_PATHS.VIDEO_LIST}${qs ? `?${qs}` : ''}`);
 }
 
 /** 获取视频详情 */
@@ -305,7 +305,7 @@ export function getVideoWithLines(id: string) {
 
 /** 上报线路速度 */
 export function reportLineSpeed(videoId: string, lineIndex: number, speed: number) {
-	return post('/api/v1/videos/line-speed', {
+	return post(API_PATHS.VIDEO_LINE_SPEED, {
 		video_id: videoId,
 		line_index: lineIndex,
 		speed

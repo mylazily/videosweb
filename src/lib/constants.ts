@@ -34,6 +34,7 @@ export const API_PATHS = {
 	SEARCH_HOT: '/api/v1/search/hot',
 	VIDEO_WATCH: '/api/v1/videos',             // POST /api/v1/videos/:id/watch（需认证）
 	VIDEO_PLAY: '/api/v1/videos',              // GET /api/v1/videos/:id/play
+	VIDEO_LINE_SPEED: '/api/v1/videos/line-speed',
 
 	// ========== 分类（公开） ==========
 	CATEGORY_LIST: '/api/v1/categories',
