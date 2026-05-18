@@ -8,8 +8,11 @@
  * - Cloudflare 边缘缓存 2 小时
  */
 import type { PageServerLoad } from './$types';
-import { getBaseUrl } from '$lib/apiConfig';
 import { SITE_BASE_URL } from '$lib/constants';
+
+function getServerBaseUrl(): string {
+	return import.meta.env.VITE_API_BASE_URL || import.meta.env.PUBLIC_API_BASE_URL || 'https://9901.555554.xyz';
+}
 
 export const load: PageServerLoad = async ({ params, fetch: fetchFn, setHeaders }) => {
 	const { id } = params;
@@ -19,7 +22,7 @@ export const load: PageServerLoad = async ({ params, fetch: fetchFn, setHeaders 
 		'cache-control': 'public, max-age=7200, stale-while-revalidate=14400'
 	});
 
-	const base = getBaseUrl();
+	const base = getServerBaseUrl();
 	const headers = { 'Accept': 'application/json' };
 
 	try {
