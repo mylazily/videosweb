@@ -10,7 +10,8 @@ import {
 	DOMAIN_SWITCH_TIMEOUT,
 	DOMAIN_ROTATION_PATH,
 	FALLBACK_DOMAINS,
-	DOMAIN_GIST_URL
+	DOMAIN_GIST_URL,
+	DEFAULT_API_DOMAIN,
 } from '$lib/constants';
 import { getBaseUrl, switchDomain as apiSwitchDomain } from '$lib/stores/apiConfigStore';
 import { post } from '$lib/api';
@@ -23,7 +24,7 @@ import { post } from '$lib/api';
 async function fetchDomainsFromGist(): Promise<string[]> {
 	try {
 		const response = await fetch(DOMAIN_GIST_URL, {
-			signal: AbortSignal.timeout(3000)
+			signal: AbortSignal.timeout(3000),
 		});
 		if (!response.ok) return [];
 		const data = await response.json();
@@ -59,28 +60,31 @@ export function onDomainSwitch(callback: DomainSwitchCallback): () => void {
  * 触发域名切换事件
  */
 function emitDomainSwitch(event: DomainSwitchEvent): void {
-	domainSwitchListeners.forEach(cb => cb(event));
+	domainSwitchListeners.forEach((cb) => cb(event));
 }
 
 // ========== 域名健康检查 ==========
 
 /**
  * 检查域名健康状态
- * @param domain 域名地址
+ * @param domain 域名地址（可选，为空则使用相对路径）
  * @returns 延迟时间（毫秒），失败返回 -1
  */
-export async function checkDomainHealth(domain: string): Promise<number> {
+export async function checkDomainHealth(domain?: string): Promise<number> {
 	const startTime = Date.now();
+
+	// 如果没有域名，检查相对路径
+	const checkUrl = domain ? `${domain}${DOMAIN_ROTATION_PATH}` : DOMAIN_ROTATION_PATH;
 
 	try {
 		const controller = new AbortController();
 		const timer = setTimeout(() => controller.abort(), 2000);
 
-		const response = await fetch(`${domain}/api/v1/health`, {
+		const response = await fetch(checkUrl, {
 			method: 'GET',
 			signal: controller.signal,
 			mode: 'cors',
-			cache: 'no-cache'
+			cache: 'no-cache',
 		});
 
 		clearTimeout(timer);
@@ -131,7 +135,7 @@ export async function switchDomain(
 		from_domain: fromDomain,
 		to_domain: domain,
 		reason,
-		timestamp: new Date().toISOString()
+		timestamp: new Date().toISOString(),
 	};
 
 	// 通知监听器
@@ -152,11 +156,11 @@ export async function switchDomain(
  */
 export async function autoSelectBestDomain(): Promise<string | null> {
 	// 1. 尝试从 Gist 获取动态域名
-	let allDomains = [...FALLBACK_DOMAINS];
+	let allDomains = [...FALLBACK_DOMAINS, DEFAULT_API_DOMAIN];
 	try {
 		const gistDomains = await fetchDomainsFromGist();
 		if (gistDomains.length > 0) {
-			allDomains = [...gistDomains, ...FALLBACK_DOMAINS];
+			allDomains = [...gistDomains, ...FALLBACK_DOMAINS, DEFAULT_API_DOMAIN];
 		}
 	} catch {
 		// Gist 不可用，使用硬编码域名
@@ -234,19 +238,21 @@ export function stopDomainMonitoring(): void {
  * 获取域名可用性列表
  */
 export async function getDomainAvailabilityList(): Promise<DomainAvailability[]> {
+	const allDomains = [DEFAULT_API_DOMAIN, ...FALLBACK_DOMAINS];
+
 	const results = await Promise.allSettled(
-		FALLBACK_DOMAINS.map(async (domain) => {
+		allDomains.map(async (domain) => {
 			const latency = await checkDomainHealth(domain);
 			return {
 				domain,
 				is_alive: latency > 0,
 				latency: Math.max(0, latency),
-				checked_at: new Date().toISOString()
+				checked_at: new Date().toISOString(),
 			};
 		})
 	);
 
 	return results
 		.filter((r): r is PromiseFulfilledResult<DomainAvailability> => r.status === 'fulfilled')
-		.map(r => r.value);
+		.map((r) => r.value);
 }

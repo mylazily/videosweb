@@ -218,38 +218,74 @@ export const DANMAKU_CONFIG = {
 
 // ========== API 域名配置 ==========
 
+/** GitHub Gist 地址（存储可用域名列表） */
+export const DOMAIN_GIST_URL = 'https://gist.githubusercontent.com/xvideos-domains/main/domains.json';
+
+/**
+ * 硬编码备用域名列表
+ * 修复: 添加实际可用的备用域名
+ */
+export const FALLBACK_DOMAINS: string[] = [
+	'https://api.555554.xyz',
+	'https://9901.555554.xyz',
+];
+
+/** 默认 API 域名 */
+export const DEFAULT_API_DOMAIN = 'https://api.555554.xyz';
+
 /**
  * 动态获取 API 基础 URL
- * 
- * 核心逻辑：从浏览器地址栏自动提取主域名，拼接 api 二级域名
+ *
+ * 核心逻辑：
+ * 1. 开发环境 (localhost) 使用相对路径，通过 Vite 代理访问后端
+ * 2. 生产环境从浏览器地址栏自动提取主域名，拼接 api 二级域名
+ * 3. 如果动态域名不可用，切换到备用域名列表
+ *
  * 例如：用户访问 https://901.555554.xyz → API 地址为 https://api.555554.xyz
- * 
- * 如果动态域名不可用，回退到 9901.555554.xyz
  */
 export function getApiBaseUrl(): string {
 	if (typeof window === 'undefined') return '';
 
 	const hostname = window.location.hostname;
+	const protocol = window.location.protocol;
+
+	// 开发环境检测
+	const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+	const isDev = import.meta.env.DEV;
+
+	if (isLocalhost || isDev) {
+		// 开发环境：使用相对路径，让 Vite proxy 处理
+		return '';
+	}
+
 	const parts = hostname.split('.');
 
 	// 如果是 IP 地址或 localhost，使用备用域名
-	if (parts.length < 2) return 'https://9901.555554.xyz';
-
-	const baseDomain = parts.slice(-2).join('.');
-
-	// 如果是 IP 地址或 localhost，使用备用域名
-	if (/^\d+\.\d+\.\d+\.\d+$/.test(baseDomain) || baseDomain === 'localhost') {
-		return 'https://9901.555554.xyz';
+	if (parts.length < 2) {
+		return DEFAULT_API_DOMAIN;
 	}
 
-	return `https://api.${baseDomain}`;
+	// 检查是否为 IP 地址
+	const baseDomain = parts.slice(-2).join('.');
+	if (/^\d+\.\d+\.\d+\.\d+$/.test(baseDomain)) {
+		return `${protocol}//${hostname}`;
+	}
+
+	// 构建 api.{domain} 格式
+	return `${protocol}//api.${baseDomain}`;
 }
 
-/** GitHub Gist 地址（存储可用域名列表） */
-export const DOMAIN_GIST_URL = 'https://gist.githubusercontent.com/xvideos-domains/main/domains.json';
+/** 是否为开发环境 */
+export function isDevelopment(): boolean {
+	if (typeof window === 'undefined') return false;
+	const hostname = window.location.hostname;
+	return hostname === 'localhost' || hostname === '127.0.0.1' || import.meta.env.DEV;
+}
 
-/** 硬编码备用域名列表 */
-export const FALLBACK_DOMAINS: string[] = [];
+/** 是否应该使用相对路径（开发环境或 Cloudflare 部署） */
+export function shouldUseRelativePath(): boolean {
+	return isDevelopment();
+}
 
 /** API 请求超时时间（毫秒） */
 export const API_TIMEOUT = 10000;

@@ -5,7 +5,17 @@ export default defineConfig({
 	plugins: [sveltekit()],
 	server: {
 		port: 3000,
-		host: true
+		host: true,
+		// 修复: 添加 API 代理解决开发环境跨域问题
+		proxy: {
+			'/api': {
+				target: 'http://localhost:8080',
+				changeOrigin: true,
+				rewrite: (path) => path,
+				// 开发环境允许 WebSocket 用于热更新
+				ws: true,
+			},
+		},
 	},
 	build: {
 		// 优化代码分割

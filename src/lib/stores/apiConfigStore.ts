@@ -1,15 +1,23 @@
 /**
  * API 配置状态管理 Store
- * 
- * 核心策略：动态域名拼接
- * 从浏览器地址栏自动提取主域名，拼接 api 二级域名
- * 例如：用户访问 https://901.555554.xyz → API 地址为 https://api.555554.xyz
- * 
+ *
+ * 核心策略：智能域名选择
+ * 1. 开发环境：使用相对路径，通过 Vite 代理
+ * 2. 生产环境：动态计算 api.{domain} 作为主域名
+ * 3. 备用方案：探活失败时使用 FALLBACK_DOMAINS
+ *
  * 不再依赖 Gist 或硬编码域名列表，完全自动化
  */
 
 import { writable, derived, type Readable } from 'svelte/store';
-import { getApiBaseUrl, API_PATHS, DOMAIN_CHECK_TIMEOUT } from '$lib/constants';
+import {
+	getApiBaseUrl,
+	API_PATHS,
+	DOMAIN_CHECK_TIMEOUT,
+	FALLBACK_DOMAINS,
+	DEFAULT_API_DOMAIN,
+	isDevelopment,
+} from '$lib/constants';
 import type { ApiDomain } from '$lib/types';
 
 // ========== Store 状态 ==========
@@ -57,7 +65,7 @@ async function fetchWithTimeout(url: string, timeout: number): Promise<Response>
 		const response = await fetch(url, {
 			method: 'GET',
 			signal: controller.signal,
-			mode: 'cors'
+			mode: 'cors',
 		});
 		clearTimeout(timer);
 		return response;
@@ -73,7 +81,8 @@ async function fetchWithTimeout(url: string, timeout: number): Promise<Response>
 async function pingDomain(domain: string): Promise<number> {
 	const startTime = Date.now();
 	try {
-		const response = await fetchWithTimeout(`${domain}${API_PATHS.HEALTH}`, DOMAIN_CHECK_TIMEOUT);
+		const url = domain ? `${domain}${API_PATHS.HEALTH}` : API_PATHS.HEALTH;
+		const response = await fetchWithTimeout(url, DOMAIN_CHECK_TIMEOUT);
 		if (response.ok) {
 			return Date.now() - startTime;
 		}
@@ -87,11 +96,12 @@ async function pingDomain(domain: string): Promise<number> {
 
 /**
  * 检测并激活可用的 API 域名
- * 
+ *
  * 策略：
- * 1. 动态计算 api.{domain} 作为主域名
- * 2. 探活检测，成功则激活
- * 3. 失败则使用相对路径（通过 Cloudflare Pages Function 代理）
+ * 1. 开发环境：使用相对路径（baseUrl 为空）
+ * 2. 动态计算 API 域名，探活检测
+ * 3. 失败则尝试备用域名
+ * 4. 都失败则使用相对路径（通过 Cloudflare Pages Function 代理）
  */
 export async function checkAndActiveApi(): Promise<string> {
 	if (isInitialized) return currentBaseUrl;
@@ -99,32 +109,62 @@ export async function checkAndActiveApi(): Promise<string> {
 	checkingStore.set(true);
 
 	try {
-		// 1. 动态计算 API 域名
+		// 1. 开发环境直接使用相对路径
+		if (isDevelopment()) {
+			baseUrlStore.set('');
+			console.log('[API] 开发环境，使用相对路径');
+			initializedStore.set(true);
+			return '';
+		}
+
+		// 2. 动态计算 API 域名
 		const dynamicUrl = getApiBaseUrl();
 
 		if (dynamicUrl) {
-			// 2. 探活检测
+			// 3. 探活检测
+			console.log(`[API] 检测域名: ${dynamicUrl}`);
 			const latency = await pingDomain(dynamicUrl);
+
 			const domainInfo: ApiDomain = {
 				url: dynamicUrl,
 				name: new URL(dynamicUrl).hostname,
 				alive: latency > 0,
-				latency: latency > 0 ? latency : 0
+				latency: latency > 0 ? latency : 0,
 			};
 
-			domainsStore.set([domainInfo]);
+			domainsStore.set([domainInfo, ...FALLBACK_DOMAINS.map((url) => ({
+				url,
+				name: new URL(url).hostname,
+				alive: false,
+				latency: 0,
+			}))]);
 
 			if (latency > 0) {
 				baseUrlStore.set(dynamicUrl);
 				console.log(`[API] 激活域名: ${dynamicUrl} (延迟: ${latency}ms)`);
-			} else {
-				baseUrlStore.set('');
-				console.warn(`[API] 域名 ${dynamicUrl} 不可用，使用相对路径`);
+				initializedStore.set(true);
+				return dynamicUrl;
 			}
-		} else {
-			// 开发环境或 IP 访问，使用相对路径
+
+			// 4. 尝试备用域名
+			console.log(`[API] 主域名不可用，尝试备用域名...`);
+			for (const fallbackUrl of FALLBACK_DOMAINS) {
+				const fallbackLatency = await pingDomain(fallbackUrl);
+				if (fallbackLatency > 0) {
+					baseUrlStore.set(fallbackUrl);
+					console.log(`[API] 激活备用域名: ${fallbackUrl} (延迟: ${fallbackLatency}ms)`);
+					initializedStore.set(true);
+					return fallbackUrl;
+				}
+			}
+
+			// 5. 所有域名都不可用，使用相对路径（让 Cloudflare 代理）
+			console.warn('[API] 所有域名都不可用，使用相对路径');
 			baseUrlStore.set('');
-			console.log('[API] 使用相对路径（开发模式）');
+		} else {
+			// 开发环境或无法确定域名
+			baseUrlStore.set('');
+			console.log('[API] 使用相对路径（无法确定域名）');
 		}
 
 		initializedStore.set(true);
