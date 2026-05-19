@@ -12,7 +12,7 @@ import {
 	FALLBACK_DOMAINS,
 	DOMAIN_GIST_URL
 } from '$lib/constants';
-import { getBaseUrl, switchDomain as apiSwitchDomain } from '$lib/apiConfig';
+import { getBaseUrl, switchDomain as apiSwitchDomain } from '$lib/stores/apiConfigStore';
 import { post } from '$lib/api';
 
 // ========== 事件监听器 ==========

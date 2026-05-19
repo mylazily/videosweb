@@ -15,10 +15,7 @@ export {
 	// 函数
 	checkAndActiveApi,
 	switchDomain,
-	getBaseUrl,
-	getDomains,
-	getIsChecking,
-	getIsInitialized
+	getBaseUrl
 } from './stores/apiConfigStore';
 
 // 导出域名轮询模块
